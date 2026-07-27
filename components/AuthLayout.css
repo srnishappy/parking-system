@@ -1,0 +1,17 @@
+/* ==========================================================================
+   AuthLayout.css — Auth Pages Supplementary Styles
+   Note: Core design tokens and common auth styles (auth-card, auth-brand,
+   form-control, etc.) are defined in css/style.css.
+   This file only adds styles NOT already in style.css.
+   ========================================================================== */
+
+/* Widen auth card slightly for Login page (has role buttons) */
+#loginCard .auth-card,
+.auth-card.auth-card--wide {
+  max-width: 480px;
+}
+
+/* Auth card max-width override for register (keep narrow) */
+.auth-card {
+  max-width: 460px;
+}

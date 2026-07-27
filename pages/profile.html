@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ข้อมูลส่วนตัว — จอดตรงไหน @ มหาวิทยาลัยวลัยลักษณ์</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- Header -->
+<header>
+  <div class="nav">
+    <a href="./dashboard.html" class="logo">
+      <span class="mark">P</span>จอดตรงไหน
+    </a>
+    <nav class="nav-links">
+      <a href="./dashboard.html">แนะนำที่จอดรถ</a>
+      <a href="./profile.html" class="active">ข้อมูลส่วนตัว</a>
+      <a href="./settings.html">ตั้งค่า</a>
+    </nav>
+    <div class="user-nav">
+      <div class="user-pill">
+        <div class="user-avatar" id="navAvatar">U</div>
+        <span id="navName">ผู้ใช้งาน</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </div>
+</header>
+
+<main class="page-main">
+  <h1 class="page-title">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--road-yellow)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    ข้อมูลส่วนตัว
+  </h1>
+
+  <div id="alertContainer"></div>
+
+  <div class="grid-container">
+    <!-- Sidebar -->
+    <div class="profile-card">
+      <div class="avatar-large" id="profileAvatar">U</div>
+      <h2 class="profile-name" id="profileName">—</h2>
+      <div class="profile-email" id="profileEmail">—</div>
+      <div id="profileRoleBadge" style="margin-top:10px;"></div>
+      <span class="badge-member">✓ ผู้ใช้งานระบบ WU Parking</span>
+      <div style="margin-top:16px;text-align:left;font-size:13px;color:var(--slate);line-height:1.9;">
+        <div><b>ID:</b> <span id="profileId" style="font-family:var(--font-mono);color:var(--concrete-dim);">—</span></div>
+        <div><b>สมาชิกเมื่อ:</b> <span id="profileJoined">—</span></div>
+      </div>
+    </div>
+
+    <!-- Main Edit Form -->
+    <div>
+      <div class="detail-card">
+        <h3>แก้ไขข้อมูลส่วนตัว</h3>
+        <form id="profileForm">
+          <div class="form-group">
+            <label class="form-label" for="editName">ชื่อ - นามสกุล</label>
+            <input type="text" id="editName" class="form-control" style="padding-left:14px;" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editEmail">อีเมล (ไม่สามารถเปลี่ยนได้)</label>
+            <input type="email" id="editEmail" class="form-control" style="padding-left:14px;opacity:.6;cursor:not-allowed;" disabled>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editPhone">เบอร์โทรศัพท์</label>
+            <input type="tel" id="editPhone" class="form-control" style="padding-left:14px;" placeholder="081-234-5678">
+          </div>
+          <!-- Role-specific fields -->
+          <div id="studentFields" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">รหัสนักศึกษา</label>
+              <input type="text" id="viewStudentId" class="form-control" style="padding-left:14px;opacity:.6;cursor:not-allowed;" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">สำนักวิชา</label>
+              <input type="text" id="viewFaculty" class="form-control" style="padding-left:14px;opacity:.6;cursor:not-allowed;" disabled>
+            </div>
+          </div>
+          <div id="staffFields" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">หน่วยงาน / สำนัก</label>
+              <input type="text" id="viewDepartment" class="form-control" style="padding-left:14px;opacity:.6;cursor:not-allowed;" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">อาคารสำนักงาน</label>
+              <input type="text" id="viewOffice" class="form-control" style="padding-left:14px;opacity:.6;cursor:not-allowed;" disabled>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="saveBtn">บันทึกข้อมูล</button>
+        </form>
+      </div>
+
+      <!-- Quick links back to dashboard -->
+      <div class="detail-card" style="margin-top:20px;">
+        <h3>ทางลัด</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
+          <a href="./dashboard.html" class="btn btn-ghost" style="font-size:14px;padding:10px 20px;">
+            🅿️ ไปยังหน้าแนะนำที่จอดรถ
+          </a>
+          <a href="./settings.html" class="btn btn-ghost" style="font-size:14px;padding:10px 20px;">
+            ⚙️ ตั้งค่าระบบ
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>จอดตรงไหน · Smart Parking System · มหาวิทยาลัยวลัยลักษณ์</footer>
+
+<script src="../utils/auth.js"></script>
+<script src="../components/ProtectedRoute.js"></script>
+<script>
+  function showToast(msg, type='default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  ProtectedRoute.guard({ requireAuth: true });
+  const user = ProtectedRoute.getUser();
+
+  const ROLE_BADGES = {
+    student: '<span class="role-badge role-student">🎓 นักศึกษา</span>',
+    staff:   '<span class="role-badge role-staff">👔 บุคลากร / อาจารย์</span>',
+    guest:   '<span class="role-badge role-guest">🏢 บุคคลภายนอก</span>',
+  };
+
+  if (user) {
+    document.getElementById('navAvatar').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('navName').textContent   = user.name;
+
+    document.getElementById('profileAvatar').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent   = user.name;
+    document.getElementById('profileEmail').textContent  = user.email;
+    document.getElementById('profileId').textContent     = user.id;
+    document.getElementById('profileRoleBadge').innerHTML = ROLE_BADGES[user.role] || '';
+    document.getElementById('profileJoined').textContent =
+      user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH') : '—';
+
+    document.getElementById('editName').value  = user.name;
+    document.getElementById('editEmail').value = user.email;
+    document.getElementById('editPhone').value = user.phone || '';
+
+    if (user.role === 'student') {
+      document.getElementById('studentFields').style.display = 'block';
+      document.getElementById('viewStudentId').value = user.studentId || '';
+      document.getElementById('viewFaculty').value   = user.faculty || '';
+    }
+    if (user.role === 'staff') {
+      document.getElementById('staffFields').style.display = 'block';
+      document.getElementById('viewDepartment').value = user.department || '';
+      document.getElementById('viewOffice').value     = user.officeBuilding || '';
+    }
+  }
+
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> กำลังบันทึก...';
+
+    const res = await authService.updateProfile({
+      name:  document.getElementById('editName').value.trim(),
+      phone: document.getElementById('editPhone').value.trim(),
+    });
+
+    btn.disabled = false;
+    btn.innerHTML = 'บันทึกข้อมูล';
+
+    if (res.success) {
+      showToast('✅ ' + res.message, 'success');
+      document.getElementById('navName').textContent   = res.user.name;
+      document.getElementById('navAvatar').textContent = res.user.name.charAt(0).toUpperCase();
+      document.getElementById('profileName').textContent  = res.user.name;
+      document.getElementById('profileAvatar').textContent = res.user.name.charAt(0).toUpperCase();
+    } else {
+      showToast('❌ ' + res.message, 'error');
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = './login.html';
+  });
+</script>
+</body>
+</html>

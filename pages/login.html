@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ — จอดตรงไหน @ มหาวิทยาลัยวลัยลักษณ์</title>
+  <meta name="description" content="ระบบแนะนำที่จอดรถอัจฉริยะ มหาวิทยาลัยวลัยลักษณ์">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../components/AuthLayout.css">
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="auth-container">
+  <div class="auth-card">
+
+    <!-- Brand -->
+    <div class="auth-brand">
+      <a href="../index.html" class="auth-logo">
+        <span class="mark">P</span>จอดตรงไหน
+      </a>
+      <h1 class="auth-title">เข้าสู่ระบบ</h1>
+      <p class="auth-subtitle">ระบบแนะนำที่จอดรถอัจฉริยะ มหาวิทยาลัยวลัยลักษณ์</p>
+    </div>
+
+    <!-- Quick Role Login Buttons -->
+    <div style="margin-bottom:20px;">
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--slate);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">
+        ⚡ เลือกบทบาทสำหรับการสาธิต
+      </div>
+      <div class="role-quick-btns">
+        <button type="button" class="role-quick-btn" id="fillStudent">
+          <span class="rbadge rbadge-student">STUDENT</span>
+          <div>
+            <div style="font-weight:600;color:var(--concrete);">สุระนาท สุวรรณรัตน์ — นักศึกษา</div>
+            <div style="font-size:12px;color:var(--slate);">student@wu.ac.th · เทคโนโลยีสารสนเทศอัจฉริยะ</div>
+          </div>
+        </button>
+        <button type="button" class="role-quick-btn" id="fillStaff">
+          <span class="rbadge rbadge-staff">STAFF</span>
+          <div>
+            <div style="font-weight:600;color:var(--concrete);">ดร.สมศรี มั่นคง — บุคลากร</div>
+            <div style="font-size:12px;color:var(--slate);">staff@wu.ac.th · ศูนย์บรรณสารและสื่อการศึกษา</div>
+          </div>
+        </button>
+        <button type="button" class="role-quick-btn" id="fillGuest">
+          <span class="rbadge rbadge-guest">GUEST</span>
+          <div>
+            <div style="font-weight:600;color:var(--concrete);">วิชัย ท่องเที่ยว — บุคคลภายนอก</div>
+            <div style="font-size:12px;color:var(--slate);">guest@gmail.com · ไม่มีข้อมูล WU</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="flex:1;height:1px;background:var(--asphalt-line);"></div>
+      <span style="font-size:12px;color:var(--slate);">หรือกรอกด้วยตัวเอง</span>
+      <div style="flex:1;height:1px;background:var(--asphalt-line);"></div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Login Form -->
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="loginEmail">อีเมล</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <input type="email" id="loginEmail" class="form-control" placeholder="name@example.com" autocomplete="email" required>
+        </div>
+        <div class="field-error" id="emailError" style="display:none;"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="loginPassword">รหัสผ่าน</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" autocomplete="current-password" required>
+          <button type="button" class="toggle-password" id="togglePw" aria-label="แสดง/ซ่อน">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="field-error" id="passwordError" style="display:none;"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%;margin-top:8px;font-size:16px;">
+        เข้าสู่ระบบ
+      </button>
+    </form>
+
+    <div class="auth-switch">
+      ยังไม่มีบัญชี? <a href="./register.html">สมัครสมาชิกใหม่</a>
+    </div>
+  </div>
+
+  <a href="../index.html" class="back-home">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    กลับหน้าหลัก
+  </a>
+</div>
+
+<script src="../utils/auth.js"></script>
+<script src="../utils/parkingData.js"></script>
+<script src="../components/ProtectedRoute.js"></script>
+<script src="../components/AuthLayout.js"></script>
+<script>
+  // Toast helper
+  function showToast(msg, type='default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3000);
+  }
+
+  // Redirect if already logged in
+  ProtectedRoute.guard({ requireAuth: false });
+
+  // Elements
+  const form      = document.getElementById('loginForm');
+  const emailEl   = document.getElementById('loginEmail');
+  const passEl    = document.getElementById('loginPassword');
+  const btnLogin  = document.getElementById('loginBtn');
+  const emailErr  = document.getElementById('emailError');
+  const passErr   = document.getElementById('passwordError');
+
+  AuthLayout.setupPasswordToggle('loginPassword', 'togglePw');
+
+  // Quick fill buttons
+  function fillAndHighlight(email, pass, btnId) {
+    emailEl.value = email;
+    passEl.value  = pass;
+    emailErr.style.display = 'none';
+    passErr.style.display  = 'none';
+    emailEl.classList.remove('is-invalid');
+    passEl.classList.remove('is-invalid');
+    document.querySelectorAll('.role-quick-btn').forEach(b => b.style.borderColor = '');
+    const btn = document.getElementById(btnId);
+    if (btn) btn.style.borderColor = 'var(--road-yellow)';
+  }
+
+  document.getElementById('fillStudent').addEventListener('click', () => fillAndHighlight('student@wu.ac.th', '123456', 'fillStudent'));
+  document.getElementById('fillStaff').addEventListener('click',   () => fillAndHighlight('staff@wu.ac.th',   '123456', 'fillStaff'));
+  document.getElementById('fillGuest').addEventListener('click',   () => fillAndHighlight('guest@gmail.com',  '123456', 'fillGuest'));
+
+  function clearErrors() {
+    emailErr.style.display = 'none';
+    passErr.style.display  = 'none';
+    emailEl.classList.remove('is-invalid');
+    passEl.classList.remove('is-invalid');
+    AuthLayout.showAlert('alertContainer', null, null);
+  }
+
+  function validate() {
+    clearErrors();
+    let ok = true;
+    if (!emailEl.value.trim()) {
+      emailErr.textContent = 'กรุณากรอกอีเมล';
+      emailErr.style.display = 'flex';
+      emailEl.classList.add('is-invalid');
+      ok = false;
+    } else if (!authService.isValidEmail(emailEl.value)) {
+      emailErr.textContent = 'รูปแบบอีเมลไม่ถูกต้อง';
+      emailErr.style.display = 'flex';
+      emailEl.classList.add('is-invalid');
+      ok = false;
+    }
+    if (!passEl.value.trim()) {
+      passErr.textContent = 'กรุณากรอกรหัสผ่าน';
+      passErr.style.display = 'flex';
+      passEl.classList.add('is-invalid');
+      ok = false;
+    } else if (!authService.isValidPassword(passEl.value)) {
+      passErr.textContent = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+      passErr.style.display = 'flex';
+      passEl.classList.add('is-invalid');
+      ok = false;
+    }
+    return ok;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    AuthLayout.setButtonLoading(btnLogin, true, 'เข้าสู่ระบบ');
+
+    const res = await authService.login(emailEl.value, passEl.value);
+
+    if (res.success) {
+      const roleNames = { student:'นักศึกษา', staff:'บุคลากร/อาจารย์', guest:'บุคคลภายนอก' };
+      showToast(`✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ${res.user.name} (${roleNames[res.user.role] || ''})`, 'success');
+      setTimeout(() => { window.location.href = './dashboard.html'; }, 900);
+    } else {
+      AuthLayout.setButtonLoading(btnLogin, false, 'เข้าสู่ระบบ');
+      AuthLayout.showAlert('alertContainer', 'error', res.message);
+    }
+  });
+</script>
+</body>
+</html>

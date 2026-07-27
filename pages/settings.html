@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตั้งค่าระบบ — จอดตรงไหน @ มหาวิทยาลัยวลัยลักษณ์</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<header>
+  <div class="nav">
+    <a href="./dashboard.html" class="logo">
+      <span class="mark">P</span>จอดตรงไหน
+    </a>
+    <nav class="nav-links">
+      <a href="./dashboard.html">แนะนำที่จอดรถ</a>
+      <a href="./profile.html">ข้อมูลส่วนตัว</a>
+      <a href="./settings.html" class="active">ตั้งค่า</a>
+    </nav>
+    <div class="user-nav">
+      <div class="user-pill">
+        <div class="user-avatar" id="navAvatar">U</div>
+        <span id="navName">ผู้ใช้งาน</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </div>
+</header>
+
+<main class="page-main">
+  <h1 class="page-title">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--road-yellow)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    ตั้งค่าระบบ
+  </h1>
+
+  <div id="alertContainer"></div>
+
+  <div style="max-width:700px;">
+
+    <div class="settings-card">
+      <h3>การแจ้งเตือน (Notifications)</h3>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">แจ้งเตือนเมื่อช่องจอดว่าง</div>
+          <div class="desc">ส่งการแจ้งเตือนเมื่อลานจอดที่บันทึกไว้มีช่องว่างมากกว่า 5 ช่อง</div>
+        </div>
+        <label class="switch"><input type="checkbox" checked id="sw1"><span class="slider"></span></label>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">แจ้งเตือนก่อนคาบเรียน (นักศึกษา)</div>
+          <div class="desc">แจ้งเตือน 30 นาทีก่อนคาบเรียนเริ่ม เพื่อแนะนำที่จอดรถ</div>
+        </div>
+        <label class="switch"><input type="checkbox" checked id="sw2"><span class="slider"></span></label>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">แจ้งเตือนจุดชาร์จ EV</div>
+          <div class="desc">แสดงเฉพาะลานจอดที่มีแท่นชาร์จรถยนต์ไฟฟ้า</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="sw3"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>การค้นหาและแนะนำ</h3>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">อัปเดตข้อมูลอัตโนมัติ</div>
+          <div class="desc">รีเฟรชสถานะช่องจอดรถทุก 15 วินาที</div>
+        </div>
+        <label class="switch"><input type="checkbox" checked id="sw4"><span class="slider"></span></label>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">แสดงเฉพาะลานจอดที่ว่าง</div>
+          <div class="desc">กรองลานจอดที่เต็มแล้วออกจากรายการแนะนำ</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="sw5"><span class="slider"></span></label>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">ใช้ตำแหน่ง GPS (สำหรับบุคคลภายนอก)</div>
+          <div class="desc">อนุญาตให้ระบบเข้าถึงตำแหน่งปัจจุบันของคุณ</div>
+        </div>
+        <label class="switch"><input type="checkbox" checked id="sw6"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>ความปลอดภัย</h3>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">ล้างข้อมูล Session ทั้งหมด</div>
+          <div class="desc">ล้างประวัติการเข้าใช้งานและ Cache ออกจากเครื่องนี้</div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:13px;padding:6px 14px;" id="clearBtn">ล้างข้อมูล</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="title">ออกจากระบบจากทุกอุปกรณ์</div>
+          <div class="desc">ยกเลิก Session การเข้าสู่ระบบทั้งหมด</div>
+        </div>
+        <button class="btn btn-danger" style="font-size:13px;padding:6px 14px;" id="logoutAllBtn">Logout ทั้งหมด</button>
+      </div>
+    </div>
+
+    <div style="text-align:right;">
+      <button class="btn btn-primary" id="saveSettingsBtn">บันทึกการตั้งค่าทั้งหมด</button>
+    </div>
+
+  </div>
+</main>
+
+<footer>จอดตรงไหน · Smart Parking System · มหาวิทยาลัยวลัยลักษณ์</footer>
+
+<script src="../utils/auth.js"></script>
+<script src="../components/ProtectedRoute.js"></script>
+<script>
+  function showToast(msg, type='default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  ProtectedRoute.guard({ requireAuth: true });
+  const user = ProtectedRoute.getUser();
+  if (user) {
+    document.getElementById('navAvatar').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('navName').textContent   = user.name;
+  }
+
+  document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+    showToast('✅ บันทึกการตั้งค่าเรียบร้อยแล้ว', 'success');
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    showToast('🗑️ ล้างข้อมูล Cache เรียบร้อยแล้ว', 'success');
+  });
+
+  document.getElementById('logoutAllBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = './login.html';
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = './login.html';
+  });
+</script>
+</body>
+</html>
