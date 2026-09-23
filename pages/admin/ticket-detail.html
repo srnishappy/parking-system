@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายละเอียด Ticket — Admin Portal</title>
+  <meta name="description" content="หน้าจัดการและตอบกลับ Ticket สำหรับ Admin">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../components/AuthLayout.css">
+  <style>
+    .admin-header-tag {
+      font-family: var(--font-mono); font-size: 11px; color: #ef4444;
+      background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 3px 8px; border-radius: 4px; font-weight: 700;
+    }
+    .status-btn {
+      padding: 8px 14px; border-radius: 8px; font-family: var(--font-mono); font-size: 12.5px;
+      font-weight: 700; cursor: pointer; border: 1px solid var(--asphalt-line); background: var(--ink);
+      color: var(--slate); transition: .2s;
+    }
+    .status-btn:hover { border-color: var(--concrete); color: var(--concrete); }
+    .status-btn.active-OPEN        { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-color: #3b82f6; }
+    .status-btn.active-IN_PROGRESS { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: #f59e0b; }
+    .status-btn.active-RESOLVED    { background: rgba(34, 197, 94, 0.2);  color: #4ade80; border-color: #22c55e; }
+    .status-btn.active-CLOSED      { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border-color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="nav">
+    <a href="./dashboard.html" class="logo">
+      <span class="mark" style="background:#ef4444;color:#fff;">A</span>
+      <span>Admin Dashboard</span>
+      <span class="admin-header-tag">ADMIN PORTAL</span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="./dashboard.html">แดชบอร์ด Ticket</a>
+    </nav>
+
+    <div class="user-nav">
+      <div class="user-pill" style="border-color:rgba(239,68,68,0.4);">
+        <div class="user-avatar" id="navAvatar" style="background:#ef4444;color:#fff;">A</div>
+        <span id="navName">Admin</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ออกจากระบบ
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ───────────────────────────────────────────────────────────────── -->
+<main class="page-main" style="max-width: 900px; margin: 0 auto; padding: 24px;">
+
+  <!-- Back Link -->
+  <div style="margin-bottom: 20px;">
+    <a href="./dashboard.html" style="color:var(--slate);font-size:13px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      กลับไปยัง Admin Dashboard
+    </a>
+  </div>
+
+  <!-- Loading State -->
+  <div id="ticketLoading" style="text-align:center;padding:60px;color:var(--slate);">
+    <div class="spinner" style="width:28px;height:28px;border-width:3px;margin:0 auto 12px;color:var(--road-yellow);"></div>
+    <div>กำลังโหลดข้อมูล Ticket...</div>
+  </div>
+
+  <!-- Not Found State -->
+  <div id="notFoundState" style="display:none;text-align:center;padding:60px 20px;background:var(--ink-2);border:1px dashed var(--asphalt-line);border-radius:12px;">
+    <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+    <div style="font-size:18px;font-weight:700;color:var(--concrete);margin-bottom:6px;">ไม่พบข้อมูล Ticket</div>
+    <div style="font-size:14px;color:var(--slate);margin-bottom:20px;">Ticket ID ที่ระบุไม่ถูกต้องหรือถูกลบไปแล้ว</div>
+    <a href="./dashboard.html" class="btn btn-primary">กลับ Admin Dashboard</a>
+  </div>
+
+  <!-- Main Content -->
+  <div id="ticketContent" style="display:none;">
+
+    <!-- Ticket Header Info Card -->
+    <div class="detail-card" style="margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="font-family:var(--font-mono);font-weight:800;color:var(--road-yellow);font-size:18px;" id="tktId">TKT-0000</span>
+            <span class="badge-category" id="tktCategory">Category</span>
+          </div>
+          <h1 style="font-size:22px;margin:0;color:var(--concrete);" id="tktSubject">Subject</h1>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;" id="tktBadges">
+          <!-- Badges injected via JS -->
+        </div>
+      </div>
+
+      <!-- User Info Strip -->
+      <div style="background:var(--ink);padding:12px 16px;border-radius:8px;border:1px solid var(--asphalt-line);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--road-yellow);color:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--font-mono);" id="userAvatar">U</div>
+          <div>
+            <div style="font-weight:700;color:var(--concrete);" id="tktUserName">User Name</div>
+            <div style="color:var(--slate);font-size:12px;" id="tktUserEmail">user@example.com</div>
+          </div>
+        </div>
+        <div style="color:var(--slate);font-size:12.5px;">
+          📅 วันที่แจ้ง: <span id="tktDate" style="color:var(--concrete-dim);">—</span>
+        </div>
+      </div>
+
+      <!-- Problem Description -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-family:var(--font-mono);color:var(--slate);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">รายละเอียดปัญหา:</div>
+        <div style="font-size:15px;color:var(--concrete);line-height:1.7;background:rgba(255,255,255,0.02);padding:14px 16px;border-radius:8px;border:1px solid var(--asphalt-line);white-space:pre-wrap;" id="tktDesc">
+          Description...
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Actions: Update Status Card -->
+    <div class="detail-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;font-size:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--road-yellow)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        อัปเดตสถานะ Ticket (Change Status)
+      </h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="button" class="status-btn" data-status="OPEN" onclick="handleStatusChange('OPEN')">● OPEN (รอดำเนินการ)</button>
+        <button type="button" class="status-btn" data-status="IN_PROGRESS" onclick="handleStatusChange('IN_PROGRESS')">● IN_PROGRESS (กำลังดำเนินการ)</button>
+        <button type="button" class="status-btn" data-status="RESOLVED" onclick="handleStatusChange('RESOLVED')">● RESOLVED (แก้ไขแล้ว)</button>
+        <button type="button" class="status-btn" data-status="CLOSED" onclick="handleStatusChange('CLOSED')">● CLOSED (ปิดเคส)</button>
+      </div>
+    </div>
+
+    <!-- Reply Section Card -->
+    <div class="detail-card">
+      <h3 style="margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--road-yellow)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        ประวัติการตอบกลับ & ตอบกลับผู้ใช้ (Replies)
+      </h3>
+
+      <!-- Reply Form -->
+      <form id="replyForm" style="margin-bottom:24px;">
+        <div class="form-group">
+          <label class="form-label" for="replyMsg">ข้อความตอบกลับจาก Admin</label>
+          <textarea id="replyMsg" class="form-control" rows="4" placeholder="พิมพ์ข้อความตอบกลับหรือคำแนะนำเพื่อช่วยเหลือผู้ใช้งาน..." style="padding:12px 14px;resize:vertical;" required></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button type="submit" class="btn btn-primary" id="sendReplyBtn" style="padding:10px 24px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            ส่งข้อความตอบกลับ
+          </button>
+        </div>
+      </form>
+
+      <!-- Existing Replies Thread -->
+      <div id="repliesList" class="reply-thread">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  Admin Portal · Smart Parking System · มหาวิทยาลัยวลัยลักษณ์
+</footer>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────────────────────── -->
+<script src="../../utils/auth.js"></script>
+<script src="../../mock/tickets.js"></script>
+<script src="../../api/ticketApi.js"></script>
+<script src="../../components/ProtectedRoute.js"></script>
+<script src="../../components/AuthLayout.js"></script>
+
+<script>
+  function showToast(msg, type = 'default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  // Guard ADMIN route
+  ProtectedRoute.guard({ requireAuth: true, allowedRoles: ['ADMIN'] });
+  const adminUser = ProtectedRoute.getUser();
+
+  if (adminUser) {
+    document.getElementById('navAvatar').textContent = (adminUser.name || 'A').charAt(0).toUpperCase();
+    document.getElementById('navName').textContent   = adminUser.name;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const ticketId  = urlParams.get('id');
+
+  let currentTicket = null;
+
+  const STATUS_CONFIG = {
+    OPEN:        { label: 'OPEN', class: 'badge-status-OPEN' },
+    IN_PROGRESS: { label: 'IN PROGRESS', class: 'badge-status-IN_PROGRESS' },
+    RESOLVED:    { label: 'RESOLVED', class: 'badge-status-RESOLVED' },
+    CLOSED:      { label: 'CLOSED', class: 'badge-status-CLOSED' },
+  };
+
+  const PRIORITY_CONFIG = {
+    Low:    { label: 'Low', class: 'badge-priority-Low' },
+    Medium: { label: 'Medium', class: 'badge-priority-Medium' },
+    High:   { label: 'High', class: 'badge-priority-High' },
+    Urgent: { label: 'Urgent', class: 'badge-priority-Urgent' },
+  };
+
+  async function loadTicketDetails() {
+    const loadingEl  = document.getElementById('ticketLoading');
+    const notFoundEl = document.getElementById('notFoundState');
+    const contentEl  = document.getElementById('ticketContent');
+
+    if (!ticketId) {
+      loadingEl.style.display  = 'none';
+      notFoundEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      currentTicket = await ticketApi.getTicketById(ticketId);
+      loadingEl.style.display = 'none';
+
+      if (!currentTicket) {
+        notFoundEl.style.display = 'block';
+        return;
+      }
+
+      contentEl.style.display = 'block';
+      renderTicketUI(currentTicket);
+
+    } catch (err) {
+      loadingEl.style.display = 'none';
+      showToast('❌ เกิดข้อผิดพลาดในการโหลดรายละเอียด Ticket', 'error');
+      console.error(err);
+    }
+  }
+
+  function renderTicketUI(ticket) {
+    document.getElementById('tktId').textContent       = ticket.id;
+    document.getElementById('tktCategory').textContent = ticket.category || 'General';
+    document.getElementById('tktSubject').textContent  = ticket.subject;
+    document.getElementById('tktDesc').textContent     = ticket.description;
+    document.getElementById('tktUserName').textContent = ticket.userName || 'User';
+    document.getElementById('tktUserEmail').textContent= ticket.userEmail || '';
+    document.getElementById('userAvatar').textContent  = (ticket.userName || 'U').charAt(0).toUpperCase();
+    document.getElementById('tktDate').textContent     = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString('th-TH') : '—';
+
+    // Render Badges
+    const st = STATUS_CONFIG[ticket.status]     || { label: ticket.status, class: 'badge-status-OPEN' };
+    const pr = PRIORITY_CONFIG[ticket.priority] || { label: ticket.priority, class: 'badge-priority-Medium' };
+
+    document.getElementById('tktBadges').innerHTML = `
+      <span class="${pr.class}">${pr.label}</span>
+      <span class="${st.class}">${st.label}</span>
+    `;
+
+    // Highlight active status button
+    document.querySelectorAll('.status-btn').forEach(btn => {
+      const bStatus = btn.dataset.status;
+      btn.className = `status-btn ${bStatus === ticket.status ? 'active-' + bStatus : ''}`;
+    });
+
+    // Render Replies
+    renderReplies(ticket.replies || []);
+  }
+
+  function renderReplies(replies) {
+    const repliesContainer = document.getElementById('repliesList');
+
+    if (!replies || replies.length === 0) {
+      repliesContainer.innerHTML = `<div style="color:var(--slate);font-size:13.5px;font-style:italic;padding:8px 0;">ยังไม่มีข้อความตอบกลับในระบบ</div>`;
+      return;
+    }
+
+    repliesContainer.innerHTML = replies.map(r => `
+      <div class="reply-bubble admin-reply" style="width:100%;max-width:100%;">
+        <div class="reply-header">
+          <span class="reply-sender">👨‍💼 ${r.senderName || 'Admin'}</span>
+          <span class="reply-time">${new Date(r.createdAt).toLocaleString('th-TH')}</span>
+        </div>
+        <div class="reply-body">${r.message}</div>
+      </div>
+    `).join('');
+  }
+
+  // Handle Status Update
+  async function handleStatusChange(newStatus) {
+    if (!currentTicket) return;
+    if (currentTicket.status === newStatus) return;
+
+    try {
+      const updated = await ticketApi.updateTicketStatus(currentTicket.id, newStatus);
+      currentTicket = updated;
+      renderTicketUI(updated);
+      showToast(`✅ อัปเดตสถานะ Ticket เป็น ${newStatus} สำเร็จ!`, 'success');
+    } catch (err) {
+      showToast('❌ ไม่สามารถอัปเดตสถานะได้', 'error');
+      console.error(err);
+    }
+  }
+
+  // Handle Send Reply Form
+  const replyForm    = document.getElementById('replyForm');
+  const replyMsgEl   = document.getElementById('replyMsg');
+  const sendReplyBtn = document.getElementById('sendReplyBtn');
+
+  replyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = replyMsgEl.value.trim();
+    if (!msg) return;
+
+    AuthLayout.setButtonLoading(sendReplyBtn, true, 'กำลังส่งคำตอบ...');
+
+    try {
+      const updated = await ticketApi.addTicketReply(currentTicket.id, {
+        senderId: adminUser.id || 'admin-001',
+        senderName: adminUser.name || 'Admin',
+        message: msg
+      });
+
+      currentTicket = updated;
+      replyMsgEl.value = '';
+      AuthLayout.setButtonLoading(sendReplyBtn, false, 'ส่งข้อความตอบกลับ');
+      renderTicketUI(updated);
+      showToast('✅ ส่งข้อความตอบกลับเรียบร้อยแล้ว', 'success');
+
+    } catch (err) {
+      AuthLayout.setButtonLoading(sendReplyBtn, false, 'ส่งข้อความตอบกลับ');
+      showToast('❌ เกิดข้อผิดพลาด ไม่สามารถส่งคำตอบได้', 'error');
+      console.error(err);
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = '../login.html';
+  });
+
+  loadTicketDetails();
+</script>
+</body>
+</html>

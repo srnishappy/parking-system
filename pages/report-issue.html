@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แจ้งปัญหา / Report Issue — จอดตรงไหน @ มหาวิทยาลัยวลัยลักษณ์</title>
+  <meta name="description" content="แจ้งปัญหาการใช้งานระบบจอดตรงไหน มหาวิทยาลัยวลัยลักษณ์">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../components/AuthLayout.css">
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="nav">
+    <a href="./dashboard.html" class="logo">
+      <span class="mark">P</span>
+      <span>จอดตรงไหน</span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="./dashboard.html">แนะนำที่จอดรถ</a>
+      <a href="./report-issue.html" class="active">แจ้งปัญหา</a>
+      <a href="./my-tickets.html">Ticket ของฉัน</a>
+      <a href="./profile.html">ข้อมูลส่วนตัว</a>
+      <a href="./settings.html">ตั้งค่า</a>
+    </nav>
+
+    <div class="user-nav">
+      <div class="user-pill">
+        <div class="user-avatar" id="navAvatar">U</div>
+        <span id="navName">ผู้ใช้งาน</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ออกจากระบบ
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ───────────────────────────────────────────────────────────────── -->
+<main class="page-main" style="max-width: 800px; margin: 0 auto;">
+  <div style="margin-bottom: 24px;">
+    <a href="./dashboard.html" style="color:var(--slate);font-size:13px;display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      กลับหน้า Dashboard
+    </a>
+    <h1 class="page-title" style="margin-bottom:6px;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--road-yellow)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      แจ้งปัญหา / Report Issue
+    </h1>
+    <p style="color:var(--slate);font-size:14px;">กรอกข้อมูลรายละเอียดปัญหาที่พบ เพื่อส่งเรื่องให้ทีมผู้ดูแลระบบ (Admin) ตรวจสอบและดำเนินการช่วยเหลือ</p>
+  </div>
+
+  <div id="alertContainer"></div>
+
+  <div class="detail-card">
+    <form id="reportForm" novalidate>
+      <!-- Subject -->
+      <div class="form-group">
+        <label class="form-label" for="subject">หัวข้อเรื่อง (Subject) <span style="color:var(--red);">*</span></label>
+        <input type="text" id="subject" class="form-control" placeholder="ระบุหัวข้อปัญหา เช่น ไม่สามารถเข้าสู่ระบบได้" style="padding-left:14px;" required>
+        <div class="field-error" id="subjectError" style="display:none;"></div>
+      </div>
+
+      <!-- Category & Priority Grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="grid-2col">
+        <div class="form-group">
+          <label class="form-label" for="category">หมวดหมู่ (Category) <span style="color:var(--red);">*</span></label>
+          <select id="category" class="form-control filter-select" style="width:100%;height:46px;padding-left:12px;" required>
+            <option value="Technical Issue">Technical Issue (ปัญหาทางเทคนิค)</option>
+            <option value="Account Issue">Account Issue (ปัญหาบัญชีผู้ใช้)</option>
+            <option value="Payment Issue">Payment Issue (ปัญหาการชำระเงิน/ค่าธรรมเนียม)</option>
+            <option value="Other">Other (ปัญหาอื่น ๆ)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="priority">ความสำคัญ (Priority) <span style="color:var(--red);">*</span></label>
+          <select id="priority" class="form-control filter-select" style="width:100%;height:46px;padding-left:12px;" required>
+            <option value="Low">Low (ต่ำ)</option>
+            <option value="Medium" selected>Medium (ปานกลาง)</option>
+            <option value="High">High (สูง)</option>
+            <option value="Urgent">Urgent (เร่งด่วนที่สุด)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label class="form-label" for="description">รายละเอียดปัญหา (Description) <span style="color:var(--red);">*</span></label>
+        <textarea id="description" class="form-control" rows="5" placeholder="อธิบายรายละเอียดของปัญหาที่คุณพบ เช่น ขั้นตอนที่เกิดปัญหา หรือข้อความผิดพลาดที่ปรากฏ" style="padding:12px 14px;resize:vertical;" required></textarea>
+        <div class="field-error" id="descError" style="display:none;"></div>
+      </div>
+
+      <!-- Submit Button -->
+      <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px;">
+        <a href="./dashboard.html" class="btn btn-ghost">ยกเลิก</a>
+        <button type="submit" class="btn btn-primary" id="submitBtn" style="padding:12px 28px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          ส่ง Ticket แจ้งปัญหา
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<footer>
+  จอดตรงไหน · Smart Parking System · มหาวิทยาลัยวลัยลักษณ์
+</footer>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────────────────────── -->
+<script src="../utils/auth.js"></script>
+<script src="../mock/tickets.js"></script>
+<script src="../api/ticketApi.js"></script>
+<script src="../components/ProtectedRoute.js"></script>
+<script src="../components/AuthLayout.js"></script>
+
+<script>
+  function showToast(msg, type = 'default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  // Guard user routes (Only USER role / regular users can access)
+  ProtectedRoute.guard({ requireAuth: true, allowedRoles: ['USER', 'student', 'staff', 'guest'] });
+  const user = ProtectedRoute.getUser();
+
+  if (user) {
+    document.getElementById('navAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+    document.getElementById('navName').textContent   = user.name;
+  }
+
+  const form        = document.getElementById('reportForm');
+  const subjectEl   = document.getElementById('subject');
+  const descEl      = document.getElementById('description');
+  const categoryEl  = document.getElementById('category');
+  const priorityEl  = document.getElementById('priority');
+  const submitBtn   = document.getElementById('submitBtn');
+  const subjectErr  = document.getElementById('subjectError');
+  const descErr     = document.getElementById('descError');
+
+  function validate() {
+    let ok = true;
+    subjectErr.style.display = 'none';
+    descErr.style.display    = 'none';
+
+    if (!subjectEl.value.trim()) {
+      subjectErr.textContent = 'กรุณากรอกหัวข้อเรื่อง';
+      subjectErr.style.display = 'flex';
+      ok = false;
+    }
+
+    if (!descEl.value.trim()) {
+      descErr.textContent = 'กรุณากรอกรายละเอียดปัญหา';
+      descErr.style.display = 'flex';
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    AuthLayout.setButtonLoading(submitBtn, true, 'กำลังส่ง Ticket...');
+
+    try {
+      const created = await ticketApi.createTicket({
+        subject: subjectEl.value.trim(),
+        description: descEl.value.trim(),
+        category: categoryEl.value,
+        priority: priorityEl.value,
+        user: user
+      });
+
+      showToast(`✅ สร้าง Ticket สำเร็จ! ID: ${created.id}`, 'success');
+      setTimeout(() => {
+        window.location.href = './my-tickets.html';
+      }, 1000);
+
+    } catch (err) {
+      AuthLayout.setButtonLoading(submitBtn, false, 'ส่ง Ticket แจ้งปัญหา');
+      showToast('❌ เกิดข้อผิดพลาด ไม่สามารถสร้าง Ticket ได้', 'error');
+      console.error(err);
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = './login.html';
+  });
+</script>
+</body>
+</html>

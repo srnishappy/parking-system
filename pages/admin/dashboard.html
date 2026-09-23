@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — ระบบจัดการ Ticket แจ้งปัญหา</title>
+  <meta name="description" content="หน้าจัดการและติดตาม Ticket สำหรับ Admin">
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .admin-header-tag {
+      font-family: var(--font-mono); font-size: 11px; color: #ef4444;
+      background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 3px 8px; border-radius: 4px; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ── ADMIN HEADER ───────────────────────────────────────────────────────── -->
+<header>
+  <div class="nav">
+    <a href="./dashboard.html" class="logo">
+      <span class="mark" style="background:#ef4444;color:#fff;">A</span>
+      <span>Admin Dashboard</span>
+      <span class="admin-header-tag">ADMIN PORTAL</span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="./dashboard.html" class="active">แดชบอร์ด Ticket</a>
+    </nav>
+
+    <div class="user-nav">
+      <div class="user-pill" style="border-color:rgba(239,68,68,0.4);">
+        <div class="user-avatar" id="navAvatar" style="background:#ef4444;color:#fff;">A</div>
+        <span id="navName">Admin</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ออกจากระบบ
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ───────────────────────────────────────────────────────────────── -->
+<main class="page-main" style="max-width: 1200px; margin: 0 auto; padding: 24px;">
+
+  <!-- Header Title -->
+  <div style="margin-bottom: 24px;">
+    <h1 class="page-title" style="margin-bottom:6px;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      ระบบจัดการ Ticket แจ้งปัญหา (Admin Dashboard)
+    </h1>
+    <p style="color:var(--slate);font-size:14px;">รายการปัญหาทั้งหมดที่ถูกส่งมาจากผู้ใช้ระบบ สามารถค้นหา กรองข้อมูล เปลี่ยนสถานะ และตอบกลับผู้ใช้ได้</p>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal" style="color:var(--concrete);">0</div>
+      <div class="stat-label">Ticket ทั้งหมด</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statOpen" style="color:#60a5fa;">0</div>
+      <div class="stat-label">รอดำเนินการ (OPEN)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statProgress" style="color:#fbbf24;">0</div>
+      <div class="stat-label">กำลังดำเนินการ (IN PROGRESS)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statResolved" style="color:#4ade80;">0</div>
+      <div class="stat-label">แก้ไขแล้ว / ปิดเคส</div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="filter-bar">
+    <!-- Search -->
+    <div class="filter-group" style="flex:2;min-width:240px;">
+      <label class="filter-label">🔍 ค้นหา (Ticket ID / หัวข้อ / ผู้แจ้ง)</label>
+      <input type="text" id="searchInput" class="filter-select" placeholder="พิมพ์เพื่อค้นหา..." autocomplete="off">
+    </div>
+
+    <!-- Filter Status -->
+    <div class="filter-group">
+      <label class="filter-label">📌 สถานะ (Status)</label>
+      <select id="filterStatus" class="filter-select">
+        <option value="ALL">ทั้งหมด (All Status)</option>
+        <option value="OPEN">OPEN (รอดำเนินการ)</option>
+        <option value="IN_PROGRESS">IN_PROGRESS (กำลังดำเนินการ)</option>
+        <option value="RESOLVED">RESOLVED (แก้ไขแล้ว)</option>
+        <option value="CLOSED">CLOSED (ปิดเคส)</option>
+      </select>
+    </div>
+
+    <!-- Filter Priority -->
+    <div class="filter-group">
+      <label class="filter-label">⚡ ความสำคัญ (Priority)</label>
+      <select id="filterPriority" class="filter-select">
+        <option value="ALL">ทั้งหมด (All Priority)</option>
+        <option value="Low">Low (ต่ำ)</option>
+        <option value="Medium">Medium (ปานกลาง)</option>
+        <option value="High">High (สูง)</option>
+        <option value="Urgent">Urgent (เร่งด่วน)</option>
+      </select>
+    </div>
+
+    <!-- Filter Category -->
+    <div class="filter-group">
+      <label class="filter-label">🏷️ หมวดหมู่ (Category)</label>
+      <select id="filterCategory" class="filter-select">
+        <option value="ALL">ทั้งหมด (All Category)</option>
+        <option value="Technical Issue">Technical Issue</option>
+        <option value="Account Issue">Account Issue</option>
+        <option value="Payment Issue">Payment Issue</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading indicator -->
+  <div id="loadingBox" style="text-align:center;padding:40px;color:var(--slate);">
+    <div class="spinner" style="width:28px;height:28px;border-width:3px;margin:0 auto 12px;color:var(--road-yellow);"></div>
+    <div>กำลังโหลดรายการ Ticket...</div>
+  </div>
+
+  <!-- Tickets Table -->
+  <div id="tableWrap" class="ticket-table-wrap" style="display:none;">
+    <table class="ticket-table">
+      <thead>
+        <tr>
+          <th>Ticket ID</th>
+          <th>ผู้แจ้งปัญหา</th>
+          <th>หัวข้อเรื่อง</th>
+          <th>หมวดหมู่</th>
+          <th>ความสำคัญ</th>
+          <th>สถานะ</th>
+          <th>วันที่แจ้ง</th>
+          <th style="text-align:right;">การจัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="ticketsTbody">
+        <!-- Dynamic Rows -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty Search/Filter State -->
+  <div id="emptyResults" style="display:none;text-align:center;padding:48px 20px;background:var(--ink-2);border:1px dashed var(--asphalt-line);border-radius:12px;margin-top:16px;">
+    <div style="font-size:32px;margin-bottom:8px;">🔍</div>
+    <div style="font-weight:700;color:var(--concrete);">ไม่พบรายการ Ticket ที่ตรงกับเงื่อนไข</div>
+    <div style="font-size:13px;color:var(--slate);margin-top:4px;">ลองเปลี่ยนคำค้นหาหรือตัวกรองสถานะ</div>
+  </div>
+
+</main>
+
+<footer>
+  Admin Portal · Smart Parking System · มหาวิทยาลัยวลัยลักษณ์
+</footer>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────────────────────── -->
+<script src="../../utils/auth.js"></script>
+<script src="../../mock/tickets.js"></script>
+<script src="../../api/ticketApi.js"></script>
+<script src="../../components/ProtectedRoute.js"></script>
+
+<script>
+  function showToast(msg, type = 'default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  // Enforce ADMIN role protection
+  ProtectedRoute.guard({ requireAuth: true, allowedRoles: ['ADMIN'] });
+  const adminUser = ProtectedRoute.getUser();
+
+  if (adminUser) {
+    document.getElementById('navAvatar').textContent = (adminUser.name || 'A').charAt(0).toUpperCase();
+    document.getElementById('navName').textContent   = adminUser.name;
+  }
+
+  let allTickets = [];
+
+  const STATUS_CONFIG = {
+    OPEN:        { label: 'OPEN', class: 'badge-status-OPEN' },
+    IN_PROGRESS: { label: 'IN PROGRESS', class: 'badge-status-IN_PROGRESS' },
+    RESOLVED:    { label: 'RESOLVED', class: 'badge-status-RESOLVED' },
+    CLOSED:      { label: 'CLOSED', class: 'badge-status-CLOSED' },
+  };
+
+  const PRIORITY_CONFIG = {
+    Low:    { label: 'Low', class: 'badge-priority-Low' },
+    Medium: { label: 'Medium', class: 'badge-priority-Medium' },
+    High:   { label: 'High', class: 'badge-priority-High' },
+    Urgent: { label: 'Urgent', class: 'badge-priority-Urgent' },
+  };
+
+  async function loadAdminTickets() {
+    const loadingBox = document.getElementById('loadingBox');
+    const tableWrap  = document.getElementById('tableWrap');
+    
+    try {
+      allTickets = await ticketApi.getTickets();
+      loadingBox.style.display = 'none';
+      tableWrap.style.display  = 'block';
+
+      updateStats(allTickets);
+      renderTable();
+    } catch (err) {
+      loadingBox.style.display = 'none';
+      showToast('❌ ไม่สามารถโหลดข้อมูล Ticket ได้', 'error');
+      console.error(err);
+    }
+  }
+
+  function updateStats(tickets) {
+    document.getElementById('statTotal').textContent    = tickets.length;
+    document.getElementById('statOpen').textContent     = tickets.filter(t => t.status === 'OPEN').length;
+    document.getElementById('statProgress').textContent = tickets.filter(t => t.status === 'IN_PROGRESS').length;
+    document.getElementById('statResolved').textContent = tickets.filter(t => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+  }
+
+  function renderTable() {
+    const tbody       = document.getElementById('ticketsTbody');
+    const emptyBox    = document.getElementById('emptyResults');
+    const tableWrap   = document.getElementById('tableWrap');
+    const searchVal   = document.getElementById('searchInput').value.trim().toLowerCase();
+    const statusVal   = document.getElementById('filterStatus').value;
+    const priorityVal = document.getElementById('filterPriority').value;
+    const catVal      = document.getElementById('filterCategory').value;
+
+    const filtered = allTickets.filter(t => {
+      // Search
+      const matchSearch = !searchVal || 
+        (t.id && t.id.toLowerCase().includes(searchVal)) ||
+        (t.subject && t.subject.toLowerCase().includes(searchVal)) ||
+        (t.userName && t.userName.toLowerCase().includes(searchVal)) ||
+        (t.userEmail && t.userEmail.toLowerCase().includes(searchVal));
+
+      // Status
+      const matchStatus = statusVal === 'ALL' || t.status === statusVal;
+
+      // Priority
+      const matchPriority = priorityVal === 'ALL' || t.priority === priorityVal;
+
+      // Category
+      const matchCategory = catVal === 'ALL' || t.category === catVal;
+
+      return matchSearch && matchStatus && matchPriority && matchCategory;
+    });
+
+    if (filtered.length === 0) {
+      tableWrap.style.display = 'none';
+      emptyBox.style.display  = 'block';
+      return;
+    }
+
+    emptyBox.style.display  = 'none';
+    tableWrap.style.display = 'block';
+
+    tbody.innerHTML = filtered.map(t => {
+      const st  = STATUS_CONFIG[t.status]     || { label: t.status, class: 'badge-status-OPEN' };
+      const pr  = PRIORITY_CONFIG[t.priority] || { label: t.priority, class: 'badge-priority-Medium' };
+      const dateStr = t.createdAt ? new Date(t.createdAt).toLocaleString('th-TH') : '—';
+
+      return `
+        <tr>
+          <td>
+            <a href="./ticket-detail.html?id=${t.id}" style="font-family:var(--font-mono);font-weight:700;color:var(--road-yellow);text-decoration:none;">
+              ${t.id}
+            </a>
+          </td>
+          <td>
+            <div style="font-weight:600;color:var(--concrete);">${t.userName || 'User'}</div>
+            <div style="font-size:12px;color:var(--slate);">${t.userEmail || ''}</div>
+          </td>
+          <td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${t.subject}">
+            <b>${t.subject}</b>
+          </td>
+          <td><span class="badge-category">${t.category || 'General'}</span></td>
+          <td><span class="${pr.class}">${pr.label}</span></td>
+          <td><span class="${st.class}">${st.label}</span></td>
+          <td style="font-size:12.5px;color:var(--slate);">${dateStr}</td>
+          <td style="text-align:right;">
+            <a href="./ticket-detail.html?id=${t.id}" class="btn btn-ghost" style="padding:6px 12px;font-size:12.5px;">
+              จัดการ / ตอบกลับ
+            </a>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Filter Event Listeners
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('filterStatus').addEventListener('change', renderTable);
+  document.getElementById('filterPriority').addEventListener('change', renderTable);
+  document.getElementById('filterCategory').addEventListener('change', renderTable);
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = '../login.html';
+  });
+
+  loadAdminTickets();
+</script>
+</body>
+</html>

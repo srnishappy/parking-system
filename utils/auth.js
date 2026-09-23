@@ -14,6 +14,24 @@ const STORAGE_LOGGED_IN_KEY  = 'parking_app_is_logged_in';
 // MOCK USER SEED DATA
 // ---------------------------------------------------------------------------
 const MOCK_USERS = [
+  // ── 0. DEMO ACCOUNTS ────────────────────────────────────────────────────
+  {
+    id: "user-001",
+    email: "user@example.com",
+    password: "user123",
+    name: "User001",
+    role: "USER",
+    createdAt: "2026-09-22T08:00:00.000Z"
+  },
+  {
+    id: "admin-001",
+    email: "admin@example.com",
+    password: "admin123",
+    name: "Admin",
+    role: "ADMIN",
+    createdAt: "2026-09-22T08:00:00.000Z"
+  },
+
   // ── 1. นักศึกษา ────────────────────────────────────────────────────────
   {
     id: 'usr_student_001',

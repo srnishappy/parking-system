@@ -22,6 +22,14 @@ window.ParkingCard = {
     const pct  = Math.round((lot.availableSpots / lot.totalSpots) * 100);
     const dist = lot.distanceText || '—';
 
+    // Prediction Data resolution
+    const pred = lot.prediction || (window.MOCK_PARKING_PREDICTIONS && window.MOCK_PARKING_PREDICTIONS[lot.id]) || {
+      predictedSpots: lot.availableSpots,
+      trendText: '🟡 ค่อนข้างคงที่',
+      trendBadgeClass: 'trend-stable',
+      predictions: { '10min': lot.availableSpots, '20min': lot.availableSpots, '30min': lot.availableSpots, '60min': lot.availableSpots }
+    };
+
     const el = document.createElement('div');
     el.className = 'p-card';
     el.innerHTML = `
@@ -47,6 +55,24 @@ window.ParkingCard = {
           <div class="p-card-fill ${cfg.barClass}" style="width:0%" data-pct="${pct}"></div>
         </div>
       </div>
+
+      <!-- 🔮 PARKING PREDICTION SECTION -->
+      <div class="p-card-prediction">
+        <div class="p-pred-header">
+          <span class="p-pred-title">🔮 Prediction (คาดการณ์ 30 นาที)</span>
+          <span class="p-pred-trend ${pred.trendBadgeClass}">${pred.trendText}</span>
+        </div>
+        <div class="p-pred-main">
+          อีก 30 นาทีข้างหน้า คาดว่าจะว่างประมาณ <span class="p-pred-highlight">${pred.predictedSpots}</span> ช่อง
+        </div>
+        <div class="p-pred-breakdown">
+          <div style="text-align:center;">10น: <b>${pred.predictions['10min']}</b></div>
+          <div style="text-align:center;">20น: <b>${pred.predictions['20min']}</b></div>
+          <div style="text-align:center;">30น: <b style="color:var(--road-yellow);">${pred.predictions['30min']}</b></div>
+          <div style="text-align:center;">60น: <b>${pred.predictions['60min']}</b></div>
+        </div>
+      </div>
+
       <div class="p-card-footer">
         <span class="p-card-hours">⏰ ${lot.openHours}</span>
         <button class="p-card-nav-btn" onclick="window.open('https://maps.google.com/?q=${lot.lat},${lot.lng}','_blank')">

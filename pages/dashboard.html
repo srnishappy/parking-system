@@ -22,6 +22,8 @@
 
     <nav class="nav-links">
       <a href="./dashboard.html" class="active">แนะนำที่จอดรถ</a>
+      <a href="./report-issue.html">แจ้งปัญหา</a>
+      <a href="./my-tickets.html">Ticket ของฉัน</a>
       <a href="./profile.html">ข้อมูลส่วนตัว</a>
       <a href="./settings.html">ตั้งค่า</a>
     </nav>
@@ -50,7 +52,16 @@
       <div class="welcome-sub" id="welcomeSub">มหาวิทยาลัยวลัยลักษณ์</div>
       <div class="welcome-detail" id="welcomeDetail"></div>
     </div>
-    <div id="welcomeExtra" style="flex-shrink:0;"></div>
+    <div id="welcomeExtra" style="flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-self:center;">
+      <a href="./report-issue.html" class="btn btn-primary" style="font-size:13.5px;padding:8px 16px;gap:6px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        แจ้งปัญหา / Report Issue
+      </a>
+      <a href="./my-tickets.html" class="btn btn-ghost" style="font-size:13.5px;padding:8px 16px;gap:6px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        ดู Ticket ของฉัน
+      </a>
+    </div>
   </div>
 
   <!-- 2. Context Panel (class schedule / office / location) -->
@@ -69,11 +80,23 @@
   </div>
 
   <!-- 4. Recommendation Section -->
-  <div class="rec-header">
+  <div class="rec-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
     <div>
       <div class="rec-title" id="recTitle">ที่จอดรถแนะนำสำหรับคุณ</div>
+      <div style="font-size:12.5px;color:var(--slate);display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--go-green);box-shadow:0 0 8px var(--go-green);"></span>
+        <span>ข้อมูลเซนเซอร์อัปเดตเรียลไทม์ทุก 1 นาที</span>
+        <span style="color:var(--asphalt-line);">|</span>
+        <span>อัปเดตล่าสุดเมื่อ: <b id="lastUpdatedTime" style="color:var(--road-yellow);font-family:var(--font-mono);">—</b></span>
+      </div>
     </div>
-    <div id="recBadge"></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button type="button" id="manualRefreshBtn" class="btn btn-ghost" style="padding:6px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        รีเฟรชข้อมูล
+      </button>
+      <div id="recBadge"></div>
+    </div>
   </div>
 
   <div class="rec-reason-box" id="recReasonBox" style="display:none;">
@@ -108,6 +131,8 @@
 <!-- ── SCRIPTS ─────────────────────────────────────────────────────────────── -->
 <script src="../utils/auth.js"></script>
 <script src="../utils/parkingData.js"></script>
+<script src="../mock/parkingPredictionData.js"></script>
+<script src="../api/parkingPredictionApi.js"></script>
 <script src="../utils/recommendationEngine.js"></script>
 <script src="../components/ProtectedRoute.js"></script>
 <script src="../components/ParkingCard.js"></script>
@@ -435,10 +460,35 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   setTimeout(() => { window.location.href = './login.html'; }, 500);
 });
 
+// ─── Auto-Update Engine (1 Minute Interval) ───────────────────────────────────
+function performAutoUpdate(isManual = false) {
+  const result = window.parkingPredictionApi.updateParkingDataAndPredictions();
+  const lastTimeEl = document.getElementById('lastUpdatedTime');
+  if (lastTimeEl) lastTimeEl.textContent = result.lastUpdated;
+
+  loadRecommendations();
+
+  if (isManual) {
+    showToast(`🔄 อัปเดตข้อมูลเซนเซอร์ที่จอดรถและ Prediction เรียบร้อยแล้ว (${result.lastUpdated})`, 'info');
+  }
+}
+
+document.getElementById('manualRefreshBtn').addEventListener('click', () => {
+  performAutoUpdate(true);
+});
+
+// Auto refresh every 60 seconds (60,000 ms) without page reload
+setInterval(() => {
+  performAutoUpdate(false);
+}, 60000);
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (async function init() {
   const roleNames = { student:'นักศึกษา', staff:'บุคลากร/อาจารย์', guest:'บุคคลภายนอก' };
   showToast(`${roleCfg.emoji} ยินดีต้อนรับ ${user.name} (${roleNames[user.role] || ''})`, 'success');
+  const initialTime = window.parkingPredictionApi.getLastUpdatedTime();
+  const lastTimeEl = document.getElementById('lastUpdatedTime');
+  if (lastTimeEl) lastTimeEl.textContent = initialTime;
   await loadRecommendations();
 })();
 </script>

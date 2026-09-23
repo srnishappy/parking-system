@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket ของฉัน / My Tickets — จอดตรงไหน @ มหาวิทยาลัยวลัยลักษณ์</title>
+  <meta name="description" content="รายการ Ticket แจ้งปัญหาของคุณ">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="nav">
+    <a href="./dashboard.html" class="logo">
+      <span class="mark">P</span>
+      <span>จอดตรงไหน</span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="./dashboard.html">แนะนำที่จอดรถ</a>
+      <a href="./report-issue.html">แจ้งปัญหา</a>
+      <a href="./my-tickets.html" class="active">Ticket ของฉัน</a>
+      <a href="./profile.html">ข้อมูลส่วนตัว</a>
+      <a href="./settings.html">ตั้งค่า</a>
+    </nav>
+
+    <div class="user-nav">
+      <div class="user-pill">
+        <div class="user-avatar" id="navAvatar">U</div>
+        <span id="navName">ผู้ใช้งาน</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ออกจากระบบ
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ───────────────────────────────────────────────────────────────── -->
+<main class="page-main" style="max-width: 960px; margin: 0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+    <div>
+      <h1 class="page-title" style="margin-bottom:4px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--road-yellow)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Ticket ของฉัน (My Tickets)
+      </h1>
+      <p style="color:var(--slate);font-size:14px;">รายการปัญหาทั้งหมดที่คุณได้แจ้งเข้ามา ติดตามสถานะและข้อความตอบกลับจาก Admin</p>
+    </div>
+
+    <a href="./report-issue.html" class="btn btn-primary" style="padding:10px 20px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      แจ้งปัญหาใหม่
+    </a>
+  </div>
+
+  <!-- Loading State -->
+  <div id="ticketsLoading" style="text-align:center;padding:40px 0;color:var(--slate);">
+    <div class="spinner" style="width:28px;height:28px;border-width:3px;margin:0 auto 12px;color:var(--road-yellow);"></div>
+    <div>กำลังโหลดรายการ Ticket ของคุณ...</div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyTickets" style="display:none;text-align:center;padding:60px 20px;background:var(--ink-2);border:1px dashed var(--asphalt-line);border-radius:12px;">
+    <div style="font-size:40px;margin-bottom:12px;">📑</div>
+    <div style="font-size:18px;font-weight:700;color:var(--concrete);margin-bottom:6px;">ยังไม่มีรายการ Ticket</div>
+    <div style="font-size:14px;color:var(--slate);max-width:400px;margin:0 auto 20px;">คุณยังไม่ได้แจ้งปัญหาเข้ามาในระบบ หากพบปัญหาในการใช้งาน สามารถกดแจ้งปัญหาได้ทันที</div>
+    <a href="./report-issue.html" class="btn btn-primary" style="padding:10px 24px;">แจ้งปัญหาแรกของคุณ</a>
+  </div>
+
+  <!-- Tickets List -->
+  <div id="ticketsContainer" style="display:flex;flex-direction:column;gap:18px;"></div>
+</main>
+
+<footer>
+  จอดตรงไหน · Smart Parking System · มหาวิทยาลัยวลัยลักษณ์
+</footer>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────────────────────── -->
+<script src="../utils/auth.js"></script>
+<script src="../mock/tickets.js"></script>
+<script src="../api/ticketApi.js"></script>
+<script src="../components/ProtectedRoute.js"></script>
+
+<script>
+  function showToast(msg, type = 'default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  // Guard user route
+  ProtectedRoute.guard({ requireAuth: true, allowedRoles: ['USER', 'student', 'staff', 'guest'] });
+  const user = ProtectedRoute.getUser();
+
+  if (user) {
+    document.getElementById('navAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+    document.getElementById('navName').textContent   = user.name;
+  }
+
+  const STATUS_CONFIG = {
+    OPEN:        { label: 'รอดำเนินการ (OPEN)', class: 'badge-status-OPEN' },
+    IN_PROGRESS: { label: 'กำลังดำเนินการ (IN PROGRESS)', class: 'badge-status-IN_PROGRESS' },
+    RESOLVED:    { label: 'แก้ไขแล้ว (RESOLVED)', class: 'badge-status-RESOLVED' },
+    CLOSED:      { label: 'ปิดเคส (CLOSED)', class: 'badge-status-CLOSED' },
+  };
+
+  const PRIORITY_CONFIG = {
+    Low:    { label: 'Low (ต่ำ)', class: 'badge-priority-Low' },
+    Medium: { label: 'Medium (ปานกลาง)', class: 'badge-priority-Medium' },
+    High:   { label: 'High (สูง)', class: 'badge-priority-High' },
+    Urgent: { label: 'Urgent (เร่งด่วน)', class: 'badge-priority-Urgent' },
+  };
+
+  async function loadMyTickets() {
+    const loadingEl   = document.getElementById('ticketsLoading');
+    const emptyEl     = document.getElementById('emptyTickets');
+    const containerEl = document.getElementById('ticketsContainer');
+
+    loadingEl.style.display = 'block';
+    emptyEl.style.display   = 'none';
+    containerEl.innerHTML   = '';
+
+    try {
+      const tickets = await ticketApi.getUserTickets(user.id);
+      loadingEl.style.display = 'none';
+
+      if (!tickets || tickets.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      tickets.forEach(ticket => {
+        const st  = STATUS_CONFIG[ticket.status]     || { label: ticket.status, class: 'badge-status-OPEN' };
+        const pr  = PRIORITY_CONFIG[ticket.priority] || { label: ticket.priority, class: 'badge-priority-Medium' };
+        const dateStr = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString('th-TH') : '—';
+
+        const repliesHtml = (ticket.replies && ticket.replies.length > 0)
+          ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--asphalt-line);">
+               <div style="font-size:13px;font-family:var(--font-mono);color:var(--road-yellow);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                 การตอบกลับจาก Admin (${ticket.replies.length})
+               </div>
+               <div class="reply-thread">
+                 ${ticket.replies.map(r => `
+                   <div class="reply-bubble admin-reply" style="width:100%;max-width:100%;">
+                     <div class="reply-header">
+                       <span class="reply-sender">👨‍💼 ${r.senderName || 'Admin'}</span>
+                       <span class="reply-time">${new Date(r.createdAt).toLocaleString('th-TH')}</span>
+                     </div>
+                     <div class="reply-body">${r.message}</div>
+                   </div>
+                 `).join('')}
+               </div>
+             </div>`
+          : `<div style="margin-top:12px;font-size:12.5px;color:var(--slate);font-style:italic;">ยังไม่มีข้อความตอบกลับจาก Admin</div>`;
+
+        const card = document.createElement('div');
+        card.className = 'detail-card';
+        card.style.marginBottom = '0';
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-family:var(--font-mono);font-weight:700;color:var(--road-yellow);font-size:15px;">${ticket.id}</span>
+                <span class="badge-category">${ticket.category || 'General'}</span>
+              </div>
+              <h3 style="font-size:18px;margin:0;color:var(--concrete);">${ticket.subject}</h3>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <span class="${pr.class}">${pr.label}</span>
+              <span class="${st.class}">${st.label}</span>
+            </div>
+          </div>
+
+          <div style="font-size:14px;color:var(--concrete-dim);line-height:1.6;background:var(--ink);padding:12px 14px;border-radius:8px;border:1px solid var(--asphalt-line);margin-bottom:12px;">
+            ${ticket.description}
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--slate);">
+            <div>📅 วันที่แจ้ง: ${dateStr}</div>
+          </div>
+
+          ${repliesHtml}
+        `;
+
+        containerEl.appendChild(card);
+      });
+
+    } catch (err) {
+      loadingEl.style.display = 'none';
+      showToast('❌ เกิดข้อผิดพลาดในการโหลดรายการ Ticket', 'error');
+      console.error(err);
+    }
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = './login.html';
+  });
+
+  loadMyTickets();
+</script>
+</body>
+</html>

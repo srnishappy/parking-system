@@ -27,30 +27,39 @@
     <!-- Quick Role Login Buttons -->
     <div style="margin-bottom:20px;">
       <div style="font-family:var(--font-mono);font-size:11px;color:var(--slate);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">
-        ⚡ เลือกบทบาทสำหรับการสาธิต
+        ⚡ เลือกบทบาทสำหรับการสาธิต Demo
       </div>
-      <div class="role-quick-btns">
-        <button type="button" class="role-quick-btn" id="fillStudent">
-          <span class="rbadge rbadge-student">STUDENT</span>
+      <div class="role-quick-btns" style="display:flex;flex-direction:column;gap:8px;">
+        <button type="button" class="role-quick-btn" id="fillAdmin">
+          <span class="rbadge" style="background:#ef4444;color:#fff;">ADMIN</span>
           <div>
-            <div style="font-weight:600;color:var(--concrete);">สุระนาท สุวรรณรัตน์ — นักศึกษา</div>
-            <div style="font-size:12px;color:var(--slate);">student@wu.ac.th · เทคโนโลยีสารสนเทศอัจฉริยะ</div>
+            <div style="font-weight:600;color:var(--concrete);">Admin Account (แอดมิน)</div>
+            <div style="font-size:12px;color:var(--slate);">admin@example.com · admin123</div>
           </div>
         </button>
-        <button type="button" class="role-quick-btn" id="fillStaff">
-          <span class="rbadge rbadge-staff">STAFF</span>
+        <button type="button" class="role-quick-btn" id="fillUser">
+          <span class="rbadge" style="background:#3b82f6;color:#fff;">USER</span>
           <div>
-            <div style="font-weight:600;color:var(--concrete);">ดร.สมศรี มั่นคง — บุคลากร</div>
-            <div style="font-size:12px;color:var(--slate);">staff@wu.ac.th · ศูนย์บรรณสารและสื่อการศึกษา</div>
+            <div style="font-weight:600;color:var(--concrete);">User001 (ผู้ใช้งานระบบ)</div>
+            <div style="font-size:12px;color:var(--slate);">user@example.com · user123</div>
           </div>
         </button>
-        <button type="button" class="role-quick-btn" id="fillGuest">
-          <span class="rbadge rbadge-guest">GUEST</span>
-          <div>
-            <div style="font-weight:600;color:var(--concrete);">วิชัย ท่องเที่ยว — บุคคลภายนอก</div>
-            <div style="font-size:12px;color:var(--slate);">guest@gmail.com · ไม่มีข้อมูล WU</div>
-          </div>
-        </button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="role-quick-btn" id="fillStudent" style="flex:1;min-width:140px;">
+            <span class="rbadge rbadge-student">STUDENT</span>
+            <div>
+              <div style="font-weight:600;color:var(--concrete);">นักศึกษา</div>
+              <div style="font-size:11px;color:var(--slate);">student@wu.ac.th</div>
+            </div>
+          </button>
+          <button type="button" class="role-quick-btn" id="fillStaff" style="flex:1;min-width:140px;">
+            <span class="rbadge rbadge-staff">STAFF</span>
+            <div>
+              <div style="font-weight:600;color:var(--concrete);">บุคลากร</div>
+              <div style="font-size:11px;color:var(--slate);">staff@wu.ac.th</div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -144,9 +153,10 @@
     if (btn) btn.style.borderColor = 'var(--road-yellow)';
   }
 
+  document.getElementById('fillAdmin').addEventListener('click', () => fillAndHighlight('admin@example.com', 'admin123', 'fillAdmin'));
+  document.getElementById('fillUser').addEventListener('click',  () => fillAndHighlight('user@example.com',  'user123',  'fillUser'));
   document.getElementById('fillStudent').addEventListener('click', () => fillAndHighlight('student@wu.ac.th', '123456', 'fillStudent'));
   document.getElementById('fillStaff').addEventListener('click',   () => fillAndHighlight('staff@wu.ac.th',   '123456', 'fillStaff'));
-  document.getElementById('fillGuest').addEventListener('click',   () => fillAndHighlight('guest@gmail.com',  '123456', 'fillGuest'));
 
   function clearErrors() {
     emailErr.style.display = 'none';
@@ -193,9 +203,14 @@
     const res = await authService.login(emailEl.value, passEl.value);
 
     if (res.success) {
-      const roleNames = { student:'นักศึกษา', staff:'บุคลากร/อาจารย์', guest:'บุคคลภายนอก' };
+      const roleNames = { ADMIN: 'ผู้ดูแลระบบ (ADMIN)', USER: 'ผู้ใช้ทั่วไป', student: 'นักศึกษา', staff: 'บุคลากร/อาจารย์', guest: 'บุคคลภายนอก' };
       showToast(`✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ${res.user.name} (${roleNames[res.user.role] || ''})`, 'success');
-      setTimeout(() => { window.location.href = './dashboard.html'; }, 900);
+
+      const targetUrl = (res.user.role === 'ADMIN' || res.user.role === 'admin')
+        ? './admin/dashboard.html'
+        : './dashboard.html';
+
+      setTimeout(() => { window.location.href = targetUrl; }, 900);
     } else {
       AuthLayout.setButtonLoading(btnLogin, false, 'เข้าสู่ระบบ');
       AuthLayout.showAlert('alertContainer', 'error', res.message);
