@@ -130,8 +130,8 @@
 
 <!-- ── SCRIPTS ─────────────────────────────────────────────────────────────── -->
 <script src="../utils/auth.js"></script>
-<script src="../api/parkingApi.js"></script>
 <script src="../utils/parkingData.js"></script>
+<script src="../api/parkingApi.js"></script>
 <script src="../mock/parkingPredictionData.js"></script>
 <script src="../api/parkingPredictionApi.js"></script>
 <script src="../utils/recommendationEngine.js"></script>
@@ -278,14 +278,14 @@ function buildGuestContextPanel(location, isMock) {
     <div class="class-row" style="align-items:center;gap:16px;">
       <div class="location-badge">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        ${isMock ? 'ประตูทางเข้าหลัก มวล.' : `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`}
+        ${isMock ? 'ป้อมยามทางเข้าหลัก ม.วลัยลักษณ์' : `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`}
       </div>
       <button class="location-btn" id="useGpsBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         ใช้ตำแหน่งของฉัน (GPS)
       </button>
     </div>
-    ${isMock ? `<div style="margin-top:10px;font-size:12.5px;color:var(--slate);">กำลังใช้ Mock Location ที่ประตูทางเข้าหลักมหาวิทยาลัย · กดปุ่ม "ใช้ตำแหน่งของฉัน" เพื่อรับคำแนะนำที่แม่นยำขึ้น</div>` : ''}
+    ${isMock ? `<div style="margin-top:10px;font-size:12.5px;color:var(--slate);">กำลังใช้ Mock Location ที่ซุ้มประตูทางเข้าหลักมหาวิทยาลัยวลัยลักษณ์ · กดปุ่ม "ใช้ตำแหน่งของฉัน" เพื่อรับคำแนะนำที่แม่นยำขึ้น</div>` : ''}
   `;
 
   // GPS button handler
@@ -309,6 +309,9 @@ function buildGuestContextPanel(location, isMock) {
   });
 }
 
+// ─── Current User Location (tracks GPS / class building / office building) ─────────
+let currentUserLocation = null;
+
 // ─── Load & Render Recommendations ───────────────────────────────────────────
 async function loadRecommendations(guestLocation = null) {
   document.getElementById('recLoading').style.display  = 'flex';
@@ -316,6 +319,28 @@ async function loadRecommendations(guestLocation = null) {
   document.getElementById('recReasonBox').style.display = 'none';
 
   const result = await RecommendationEngine.getRecommendations(user, guestLocation);
+
+  // ── Track current location for distance calculation in search results ──
+  if (guestLocation) {
+    currentUserLocation = guestLocation;
+  } else if (user.role === 'guest') {
+    // Guest always falls back to mock location if no GPS provided
+    currentUserLocation = WU_MOCK_GUEST_LOCATION;
+  } else if (user.role === 'student') {
+    // Derive location from current/next class building
+    const cls = RecommendationEngine.getCurrentOrNextClass(user.schedule);
+    if (cls && cls.buildingId && WU_BUILDINGS[cls.buildingId]) {
+      const b = WU_BUILDINGS[cls.buildingId];
+      currentUserLocation = { lat: b.lat, lng: b.lng };
+    } else {
+      // No class: use campus centre
+      currentUserLocation = { lat: 8.6450, lng: 99.8975 };
+    }
+  } else if (user.role === 'staff') {
+    // Derive location from office building
+    const b = (WU_BUILDINGS && (WU_BUILDINGS[user.officeBuildingId] || WU_BUILDINGS['B_LIBRARY']));
+    if (b) currentUserLocation = { lat: b.lat, lng: b.lng };
+  }
 
   // Context panel
   if (user.role === 'student') {
@@ -409,11 +434,19 @@ function highlightLot(lot) {
   const grid = document.getElementById('cardsGrid');
   grid.style.display = 'grid';
   grid.innerHTML = '';
-  // Show single lot with extra context
-  const enriched = { ...lot, distanceText: '—', distanceMetres: 0 };
+  // Calculate real distance if user location is known
+  let enriched;
+  if (currentUserLocation) {
+    const [ranked] = RecommendationEngine.rankParkingByDistance(
+      currentUserLocation.lat, currentUserLocation.lng, [lot], 1
+    );
+    enriched = ranked || { ...lot, distanceText: '—', distanceMetres: 0 };
+  } else {
+    enriched = { ...lot, distanceText: '—', distanceMetres: 0 };
+  }
   grid.appendChild(ParkingCard.create(enriched, 0, false));
   document.getElementById('allLotsSection').style.display = 'none';
-  document.getElementById('recReason').textContent = `แสดงผลการค้นหา: "${lot.name}"`;
+  document.getElementById('recReason').textContent = `แสดงผลการค้นหา: "${lot.name}"${enriched.distanceText && enriched.distanceText !== '—' ? ` · ระยะทาง ${enriched.distanceText}` : ''}`;
   document.getElementById('recReasonBox').style.display = 'flex';
   grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
   showToast(`🔍 พบ: ${lot.name}`, 'info');
@@ -421,6 +454,7 @@ function highlightLot(lot) {
 
 async function highlightNearBuilding(bldg) {
   showToast(`🏛️ ค้นหาที่จอดรถใกล้ ${bldg.name}...`, 'info');
+  // Rank by building position, but also show distance from user if available
   const lots = RecommendationEngine.rankParkingByDistance(bldg.lat, bldg.lng, WU_PARKING_LOTS, 3);
 
   const grid = document.getElementById('cardsGrid');

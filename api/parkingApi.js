@@ -10,13 +10,32 @@ class ParkingApi {
   }
 
   /**
-   * Seed localStorage with default WU_PARKING_LOTS if empty
+   * Helper to resolve default parking lots from global scope
+   */
+  _getDefaultLots() {
+    if (Array.isArray(window.WU_RAW_PARKING_LOTS) && window.WU_RAW_PARKING_LOTS.length > 0) {
+      return window.WU_RAW_PARKING_LOTS;
+    }
+    if (Array.isArray(window.WU_PARKING_LOTS) && window.WU_PARKING_LOTS.length > 0) {
+      return window.WU_PARKING_LOTS;
+    }
+    return [];
+  }
+
+  /**
+   * Seed localStorage with default WU_PARKING_LOTS if empty or version updated
    */
   _initStorage() {
+    const LOTS_VERSION_KEY = 'parking_app_lots_version';
+    const CURRENT_VERSION  = 'v3_wu_real_lots_fix';
+    const savedVer = localStorage.getItem(LOTS_VERSION_KEY);
     const existing = localStorage.getItem(this.STORAGE_KEY);
-    if (!existing) {
-      const defaultLots = window.WU_PARKING_LOTS || [];
+    const defaultLots = this._getDefaultLots();
+
+    if (defaultLots.length > 0 && (!existing || existing === '[]' || savedVer !== CURRENT_VERSION)) {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(defaultLots));
+      localStorage.setItem(LOTS_VERSION_KEY, CURRENT_VERSION);
+      this._syncGlobal(defaultLots);
     }
   }
 
@@ -43,18 +62,27 @@ class ParkingApi {
    */
   getParkingLots() {
     try {
+      const defaultLots = this._getDefaultLots();
       const raw = localStorage.getItem(this.STORAGE_KEY);
-      if (!raw) {
-        const defaults = window.WU_PARKING_LOTS || [];
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(defaults));
-        return defaults;
+      if (!raw || raw === '[]') {
+        if (defaultLots.length > 0) {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(defaultLots));
+          this._syncGlobal(defaultLots);
+          return defaultLots;
+        }
       }
-      const lots = JSON.parse(raw);
+      let lots = JSON.parse(raw);
+      if (!Array.isArray(lots) || lots.length === 0) {
+        if (defaultLots.length > 0) {
+          lots = defaultLots;
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(lots));
+        }
+      }
       this._syncGlobal(lots);
       return lots;
     } catch (e) {
       console.error('Failed to parse parking lots from localStorage', e);
-      return window.WU_PARKING_LOTS || [];
+      return this._getDefaultLots();
     }
   }
 

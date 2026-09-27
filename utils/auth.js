@@ -40,21 +40,21 @@ const MOCK_USERS = [
     email: 'student@wu.ac.th',
     password: '123456',
     studentId: '68100536',
-    faculty: 'สำนักวิชาเทคโนโลยีสารสนเทศอัจฉริยะ',
+    faculty: 'สำนักวิชาสารสนเทศศาสตร์',
     phone: '089-111-2222',
     createdAt: '2024-06-01T00:00:00.000Z',
-    // ตารางเรียนประจำสัปดาห์ (day: 0=Sun 1=Mon ... 6=Sat)
+    // ตารางเรียนประจำสัปดาห์ (day: 0=Sun 1=Mon ... 6=Sat) ตามอาคารจริง ม.วลัยลักษณ์
     schedule: [
-      { day: 1, startHour: 8,  startMin: 0,  endHour: 10, endMin: 0,  building: 'อาคารไทยบุรี',              buildingId: 'B_THAIBURI' },
-      { day: 1, startHour: 13, startMin: 0,  endHour: 16, endMin: 0,  building: 'อาคารเรียนรวม 1',           buildingId: 'B_COMMON1' },
-      { day: 2, startHour: 9,  startMin: 0,  endHour: 12, endMin: 0,  building: 'อาคารวิทยาศาสตร์การแพทย์',  buildingId: 'B_MEDSCIENCE' },
-      { day: 2, startHour: 14, startMin: 0,  endHour: 17, endMin: 0,  building: 'ศูนย์บรรณสารและสื่อการศึกษา', buildingId: 'B_LIBRARY' },
-      { day: 3, startHour: 8,  startMin: 0,  endHour: 11, endMin: 0,  building: 'อาคารสำนักวิชาวิศวกรรมศาสตร์', buildingId: 'B_ENGINEERING' },
-      { day: 3, startHour: 13, startMin: 0,  endHour: 15, endMin: 0,  building: 'หอประชุมใหญ่',               buildingId: 'B_HALL' },
-      { day: 4, startHour: 10, startMin: 0,  endHour: 12, endMin: 0,  building: 'อาคารไทยบุรี',              buildingId: 'B_THAIBURI' },
-      { day: 4, startHour: 14, startMin: 0,  endHour: 16, endMin: 0,  building: 'อาคารสารสนเทศ',             buildingId: 'B_IT' },
-      { day: 5, startHour: 9,  startMin: 0,  endHour: 11, endMin: 0,  building: 'อาคารเรียนรวม 2',           buildingId: 'B_COMMON2' },
-      { day: 5, startHour: 13, startMin: 0,  endHour: 17, endMin: 0,  building: 'ศูนย์กีฬา',                 buildingId: 'B_SPORTS' },
+      { day: 1, startHour: 8,  startMin: 0,  endHour: 10, endMin: 0,  building: 'อาคารไทยบุรี (ศูนย์บริการการศึกษา)',          buildingId: 'B_THAIBURI' },
+      { day: 1, startHour: 13, startMin: 0,  endHour: 16, endMin: 0,  building: 'อาคารเรียนรวม 5 (RC5)',                       buildingId: 'B_COMMON5' },
+      { day: 2, startHour: 9,  startMin: 0,  endHour: 12, endMin: 0,  building: 'อาคารศาสตราจารย์ ดร.สมบัติฯ (ST / โกโกวา)',   buildingId: 'B_ST' },
+      { day: 2, startHour: 14, startMin: 0,  endHour: 17, endMin: 0,  building: 'ศูนย์บรรณสารและสื่อการศึกษา (CLM - หอสมุดกลาง)', buildingId: 'B_LIBRARY' },
+      { day: 3, startHour: 8,  startMin: 0,  endHour: 11, endMin: 0,  building: 'อาคารวิชาการ 4 (สำนักวิชาวิศวกรรมศาสตร์ฯ)',    buildingId: 'B_ACAD4' },
+      { day: 3, startHour: 13, startMin: 0,  endHour: 15, endMin: 0,  building: 'อาคารเรียนรวม 7 (RC7)',                       buildingId: 'B_COMMON7' },
+      { day: 4, startHour: 10, startMin: 0,  endHour: 12, endMin: 0,  building: 'อาคารเรียนรวม 1 (RC1)',                       buildingId: 'B_COMMON1' },
+      { day: 4, startHour: 14, startMin: 0,  endHour: 16, endMin: 0,  building: 'อาคารวิชาการ 5 (สำนักวิชาสารสนเทศศาสตร์)',      buildingId: 'B_ACAD5' },
+      { day: 5, startHour: 9,  startMin: 0,  endHour: 11, endMin: 0,  building: 'อาคารเรียนรวม 3 (RC3)',                       buildingId: 'B_COMMON3' },
+      { day: 5, startHour: 13, startMin: 0,  endHour: 17, endMin: 0,  building: 'อาคารศูนย์กีฬาและสุขภาพ',                     buildingId: 'B_SPORTS' },
     ]
   },
 
@@ -65,8 +65,8 @@ const MOCK_USERS = [
     name: 'ดร.สมศรี มั่นคง',
     email: 'staff@wu.ac.th',
     password: '123456',
-    department: 'ศูนย์บรรณสารและสื่อการศึกษา',
-    officeBuilding: 'ศูนย์บรรณสารและสื่อการศึกษา',
+    department: 'ศูนย์บรรณสารและสื่อการศึกษา (CLM)',
+    officeBuilding: 'ศูนย์บรรณสารและสื่อการศึกษา (CLM)',
     officeBuildingId: 'B_LIBRARY',
     phone: '075-000-001',
     position: 'นักวิชาการศึกษา',
@@ -93,10 +93,26 @@ class AuthService {
     this._init();
   }
 
-  /** Seed default users if localStorage is empty */
+  /** Seed default users if localStorage is empty or version updated */
   _init() {
-    if (!localStorage.getItem(STORAGE_USERS_KEY)) {
+    const AUTH_VERSION_KEY = 'parking_app_auth_version';
+    const CURRENT_AUTH_VER = 'v2_wu_real_buildings';
+    const savedVer = localStorage.getItem(AUTH_VERSION_KEY);
+
+    if (!localStorage.getItem(STORAGE_USERS_KEY) || savedVer !== CURRENT_AUTH_VER) {
       localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(MOCK_USERS));
+      localStorage.setItem(AUTH_VERSION_KEY, CURRENT_AUTH_VER);
+
+      // Automatically refresh current user session with updated building and schedule data
+      const curr = this.getCurrentUser();
+      if (curr) {
+        const updated = MOCK_USERS.find(u => u.email === curr.email);
+        if (updated) {
+          const sessionUser = { ...updated };
+          delete sessionUser.password;
+          localStorage.setItem(STORAGE_CURRENT_USER, JSON.stringify(sessionUser));
+        }
+      }
     } else {
       // Ensure mock accounts always exist (re-seed missing ones)
       const stored = this._getUsers();

@@ -100,7 +100,12 @@ async function getRecommendations(user, guestLocation = null) {
   // Simulate slight async delay (replace with fetch() call to real API)
   await new Promise(r => setTimeout(r, 400));
 
-  const allLots = window.WU_PARKING_LOTS;
+  let allLots = (window.parkingApi && typeof window.parkingApi.getParkingLots === 'function')
+    ? window.parkingApi.getParkingLots()
+    : (window.WU_PARKING_LOTS || window.WU_RAW_PARKING_LOTS || []);
+  if (!allLots || allLots.length === 0) {
+    allLots = window.WU_RAW_PARKING_LOTS || [];
+  }
   const buildings = window.WU_BUILDINGS;
 
   // ── STUDENT ──────────────────────────────────────────────────────────────
@@ -117,7 +122,11 @@ async function getRecommendations(user, guestLocation = null) {
       };
     }
 
-    const bldg = buildings[currentClass.buildingId];
+    const bldg = (buildings && buildings[currentClass.buildingId]) || { 
+      name: currentClass.building, 
+      lat: 8.6441, 
+      lng: 99.8978 
+    };
     const timingMap = { ongoing: 'กำลังเรียนอยู่', upcoming: 'คาบถัดไปในวันนี้', future: 'คาบเรียนต่อไป' };
 
     return {
@@ -135,7 +144,11 @@ async function getRecommendations(user, guestLocation = null) {
 
   // ── STAFF ─────────────────────────────────────────────────────────────────
   if (user.role === 'staff') {
-    const bldg = buildings[user.officeBuildingId] || buildings['B_LIBRARY'];
+    const bldg = (buildings && (buildings[user.officeBuildingId] || buildings['B_LIBRARY'])) || { 
+      name: user.officeBuilding || 'ศูนย์บรรณสารและสื่อการศึกษา (CLM)', 
+      lat: 8.6458, 
+      lng: 99.8965 
+    };
     return {
       lots: rankParkingByDistance(bldg.lat, bldg.lng, allLots, 3),
       context: {
@@ -159,7 +172,7 @@ async function getRecommendations(user, guestLocation = null) {
       isMock,
     },
     reason: isMock
-      ? 'ใช้ตำแหน่ง Mock (ประตูทางเข้าหลัก) — กดปุ่ม "ใช้ตำแหน่งของฉัน" เพื่อรับคำแนะนำที่แม่นยำขึ้น'
+      ? 'ใช้ตำแหน่ง Mock (ซุ้มประตูทางเข้าหลัก) — กดปุ่ม "ใช้ตำแหน่งของฉัน" เพื่อรับคำแนะนำที่แม่นยำขึ้น'
       : 'แสดงที่จอดรถที่ใกล้ตำแหน่งของคุณมากที่สุด'
   };
 }
@@ -177,15 +190,24 @@ function searchParkingAndBuildings(query) {
 
   const q = query.trim().toLowerCase();
 
-  const buildings = Object.values(window.WU_BUILDINGS)
-    .filter(b => b.name.toLowerCase().includes(q))
-    .slice(0, 5);
+  const seenNames = new Set();
+  const buildings = Object.values(window.WU_BUILDINGS || {})
+    .filter(b => {
+      if (seenNames.has(b.name)) return false;
+      const match = b.name.toLowerCase().includes(q) || b.id.toLowerCase().includes(q);
+      if (match) {
+        seenNames.add(b.name);
+        return true;
+      }
+      return false;
+    })
+    .slice(0, 6);
 
-  const parkingLots = window.WU_PARKING_LOTS
+  const parkingLots = (window.WU_PARKING_LOTS || [])
     .filter(p =>
       p.name.toLowerCase().includes(q) ||
       p.shortName.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q)
+      (p.description && p.description.toLowerCase().includes(q))
     )
     .slice(0, 6);
 
