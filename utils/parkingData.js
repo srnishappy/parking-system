@@ -158,5 +158,8 @@ const WU_MOCK_GUEST_LOCATION = { lat: 8.6420, lng: 99.8945 };
 
 // Export to global scope
 window.WU_BUILDINGS        = WU_BUILDINGS;
-window.WU_PARKING_LOTS     = WU_PARKING_LOTS;
+window.WU_PARKING_LOTS     = (window.parkingApi && typeof window.parkingApi.getParkingLots === 'function') 
+  ? window.parkingApi.getParkingLots() 
+  : WU_PARKING_LOTS;
 window.WU_MOCK_GUEST_LOCATION = WU_MOCK_GUEST_LOCATION;
+

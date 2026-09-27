@@ -54,11 +54,30 @@ class ParkingPredictionApi {
    * @returns {Object} { lots, predictions, lastUpdated }
    */
   updateParkingDataAndPredictions() {
-    const lots = window.WU_PARKING_LOTS || [];
+    const lots = window.parkingApi ? window.parkingApi.getParkingLots() : (window.WU_PARKING_LOTS || []);
     const predictions = window.MOCK_PARKING_PREDICTIONS || {};
 
     const now = new Date();
     this._lastUpdated = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+
+    // Fluctuate 1-3 3D parking spaces randomly
+    if (window.parkingApi && typeof window.parkingApi.getParkingSpaces === 'function') {
+      const spaces = window.parkingApi.getParkingSpaces();
+      if (spaces.length > 0) {
+        const toggleCount = Math.floor(Math.random() * 3) + 1; // 1 to 3 spaces
+        for (let i = 0; i < toggleCount; i++) {
+          const randomIndex = Math.floor(Math.random() * spaces.length);
+          const sp = spaces[randomIndex];
+          if (sp.status === 'AVAILABLE') {
+            sp.status = 'OCCUPIED';
+          } else if (sp.status === 'OCCUPIED') {
+            sp.status = 'AVAILABLE';
+          }
+          sp.lastUpdated = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+        window.parkingApi.saveAllParkingSpaces(spaces);
+      }
+    }
 
     lots.forEach(lot => {
       // Bounded randomization between -2 and +3
@@ -67,7 +86,7 @@ class ParkingPredictionApi {
       lot.availableSpots = nextAvailable;
 
       // Update lot status
-      const pct = (lot.availableSpots / lot.totalSpots) * 100;
+      const pct = (lot.totalSpots > 0) ? (lot.availableSpots / lot.totalSpots) * 100 : 0;
       if (lot.availableSpots === 0) {
         lot.status = 'full';
       } else if (pct <= 15) {
@@ -76,10 +95,16 @@ class ParkingPredictionApi {
         lot.status = 'available';
       }
 
+      // If prediction object doesn't exist for this lot, create standard prediction record
+      if (!predictions[lot.id]) {
+        predictions[lot.id] = this._generateFallback(lot.id);
+      }
+
       // Recalculate predictions smoothly based on trend and new available spots
       const predObj = predictions[lot.id];
       if (predObj) {
         predObj.currentAvailable = lot.availableSpots;
+        predObj.totalSpots = lot.totalSpots;
 
         let delta10 = 2, delta20 = 5, delta30 = 8, delta60 = 15;
 
@@ -117,6 +142,11 @@ class ParkingPredictionApi {
       }
     });
 
+    // Save updated lots to localStorage if parkingApi is present
+    if (window.parkingApi && typeof window.parkingApi.saveAllParkingLots === 'function') {
+      window.parkingApi.saveAllParkingLots(lots);
+    }
+
     return {
       lots,
       predictions,
@@ -135,19 +165,28 @@ class ParkingPredictionApi {
 
   /** Dynamic fallback generator if lot ID doesn't exist in seed data */
   _generateFallback(parkingId) {
+    const lot = window.parkingApi ? window.parkingApi.getParkingLotById(parkingId) : (window.WU_PARKING_LOTS || []).find(l => l.id === parkingId);
+    const total = lot ? lot.totalSpots : 100;
+    const avail = lot ? lot.availableSpots : 10;
+    const p10 = Math.min(total, Math.max(0, avail + 2));
+    const p20 = Math.min(total, Math.max(0, avail + 4));
+    const p30 = Math.min(total, Math.max(0, avail + 6));
+    const p60 = Math.min(total, Math.max(0, avail + 10));
+
     return {
       parkingId: parkingId,
-      currentAvailable: 10,
-      totalSpots: 100,
-      predictions: { "10min": 11, "20min": 13, "30min": 15, "60min": 18 },
+      currentAvailable: avail,
+      totalSpots: total,
+      predictions: { "10min": p10, "20min": p20, "30min": p30, "60min": p60 },
       targetMin: "30min",
-      predictedSpots: 15,
+      predictedSpots: p30,
       trend: "INCREASING",
       trendText: "🟢 มีแนวโน้มว่างเพิ่ม",
       trendBadgeClass: "trend-up",
       reason: "คาดว่าจะมีพื้นที่ว่างเพิ่มขึ้นเล็กน้อย"
     };
   }
+
 }
 
 // Global instance export

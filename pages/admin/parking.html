@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Parking Management — จัดการลานจอดรถ</title>
+  <meta name="description" content="ระบบจัดการข้อมูลลานจอดรถ (CRUD) สำหรับผู้ดูแลระบบ">
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .admin-header-tag {
+      font-family: var(--font-mono); font-size: 11px; color: #ef4444;
+      background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 3px 8px; border-radius: 4px; font-weight: 700;
+    }
+
+    /* Modal Backdrop & Dialog */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.25s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1; visibility: visible;
+    }
+    .modal-box {
+      background: var(--ink-2); border: 1px solid var(--asphalt-line);
+      border-radius: 16px; width: 100%; max-width: 580px; padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateY(20px);
+      transition: transform 0.25s ease; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-overlay.active .modal-box {
+      transform: translateY(0);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--asphalt-line); padding-bottom: 14px; margin-bottom: 20px;
+    }
+    .modal-title {
+      font-size: 18px; font-weight: 700; color: var(--concrete);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .modal-close {
+      background: none; border: none; color: var(--slate); cursor: pointer;
+      font-size: 20px; line-height: 1; padding: 4px; border-radius: 6px;
+      transition: color 0.15s ease;
+    }
+    .modal-close:hover { color: var(--concrete); background: rgba(255,255,255,0.05); }
+
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .form-group {
+      display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-label {
+      font-size: 13px; font-weight: 600; color: var(--slate-light);
+    }
+    .form-control {
+      background: var(--ink-3); border: 1px solid var(--asphalt-line);
+      color: var(--concrete); padding: 10px 14px; border-radius: 8px;
+      font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--road-yellow); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+    .form-control:disabled {
+      opacity: 0.6; cursor: not-allowed; background: var(--ink-1);
+    }
+
+    .form-error-alert {
+      background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 13.5px;
+      margin-bottom: 16px; display: none; align-items: center; gap: 8px;
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .status-badge.available {
+      background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .status-badge.tight {
+      background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .status-badge.full {
+      background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger {
+      background: #ef4444; color: #ffffff; border: none;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ── ADMIN HEADER ───────────────────────────────────────────────────────── -->
+<header>
+  <div class="nav">
+    <a href="./dashboard.html" class="logo">
+      <span class="mark" style="background:#ef4444;color:#fff;">A</span>
+      <span>Admin Dashboard</span>
+      <span class="admin-header-tag">ADMIN PORTAL</span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="./dashboard.html">แดชบอร์ด Ticket</a>
+      <a href="./parking.html" class="active">จัดการลานจอดรถ</a>
+    </nav>
+
+    <div class="user-nav">
+      <div class="user-pill" style="border-color:rgba(239,68,68,0.4);">
+        <div class="user-avatar" id="navAvatar" style="background:#ef4444;color:#fff;">A</div>
+        <span id="navName">Admin</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ออกจากระบบ
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ───────────────────────────────────────────────────────────────── -->
+<main class="page-main" style="max-width: 1200px; margin: 0 auto; padding: 24px;">
+
+  <!-- Header Title & Action -->
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+    <div>
+      <h1 class="page-title" style="margin-bottom:6px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.2 1 12.1 1 13v3c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+        ระบบจัดการข้อมูลลานจอดรถ (Parking Management)
+      </h1>
+      <p style="color:var(--slate);font-size:14px;">เพิ่ม แก้ไข ลบ และปรับปรุงข้อมูลลานจอดรถในมหาวิทยาลัยวลัยลักษณ์ ข้อมูลจะซิงค์ตรงกับหน้า Dashboard ของผู้ใช้</p>
+    </div>
+
+    <button id="openCreateModalBtn" class="btn btn-primary" style="background:#ef4444;border-color:#ef4444;padding:10px 18px;gap:8px;font-size:14px;box-shadow:0 4px 12px rgba(239,68,68,0.3);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      + เพิ่มลานจอดรถใหม่
+    </button>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotalLots" style="color:var(--concrete);">0</div>
+      <div class="stat-label">ลานจอดรถทั้งหมด</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statTotalCapacity" style="color:#60a5fa;">0</div>
+      <div class="stat-label">ความจุรวมทั้งหมด (ช่อง)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statTotalAvailable" style="color:#4ade80;">0</div>
+      <div class="stat-label">ช่องว่างรวมปัจจุบัน</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statFullLots" style="color:#fca5a5;">0</div>
+      <div class="stat-label">ลานจอดที่เต็มแล้ว (FULL)</div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="filter-bar">
+    <!-- Search -->
+    <div class="filter-group" style="flex:2;min-width:260px;">
+      <label class="filter-label">🔍 ค้นหา (รหัสลานจอด / ชื่อลานจอดรถ)</label>
+      <input type="text" id="searchInput" class="filter-select" placeholder="พิมพ์ชื่อ หรือ รหัสลานจอด (เช่น P01)..." autocomplete="off">
+    </div>
+
+    <!-- Filter Status -->
+    <div class="filter-group">
+      <label class="filter-label">📌 สถานะ (Status)</label>
+      <select id="filterStatus" class="filter-select">
+        <option value="ALL">ทั้งหมด (All Status)</option>
+        <option value="available">ว่าง (Available)</option>
+        <option value="tight">หนาแน่น (Tight)</option>
+        <option value="full">เต็ม (Full)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading indicator -->
+  <div id="loadingBox" style="text-align:center;padding:40px;color:var(--slate);">
+    <div class="spinner" style="width:28px;height:28px;border-width:3px;margin:0 auto 12px;color:#ef4444;"></div>
+    <div>กำลังโหลดรายการลานจอดรถ...</div>
+  </div>
+
+  <!-- Parking Lots Table -->
+  <div id="tableWrap" class="ticket-table-wrap" style="display:none;">
+    <table class="ticket-table">
+      <thead>
+        <tr>
+          <th style="width:80px;">รหัส</th>
+          <th>ชื่อลานจอดรถ</th>
+          <th style="text-align:center;width:110px;">ความจุรวม</th>
+          <th style="text-align:center;width:110px;">ช่องว่าง</th>
+          <th style="text-align:center;width:120px;">อัตราส่วน</th>
+          <th style="width:110px;">สถานะ</th>
+          <th style="width:120px;">เวลาทำการ</th>
+          <th style="text-align:right;width:160px;">การจัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="parkingTbody">
+        <!-- Dynamic Rows -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty Search/Filter State -->
+  <div id="emptyResults" style="display:none;text-align:center;padding:48px 20px;background:var(--ink-2);border:1px dashed var(--asphalt-line);border-radius:12px;margin-top:16px;">
+    <div style="font-size:32px;margin-bottom:8px;">🚗</div>
+    <div style="font-weight:700;color:var(--concrete);">ไม่พบลานจอดรถที่ตรงกับเงื่อนไข</div>
+    <div style="font-size:13px;color:var(--slate);margin-top:4px;">ลองเปลี่ยนคำค้นหาหรือตัวกรองสถานะ</div>
+  </div>
+
+</main>
+
+<footer>
+  Admin Portal · Smart Parking System · มหาวิทยาลัยวลัยลักษณ์
+</footer>
+
+<!-- ── MODAL: CREATE / EDIT PARKING LOT ────────────────────────────────────── -->
+<div class="modal-overlay" id="parkingModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span id="modalTitleText">เพิ่มลานจอดรถใหม่</span>
+      </div>
+      <button class="modal-close" id="closeModalBtn">&times;</button>
+    </div>
+
+    <!-- Alert Box inside modal -->
+    <div class="form-error-alert" id="modalErrorAlert">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="modalErrorMsg">ข้อผิดพลาด</span>
+    </div>
+
+    <form id="parkingForm">
+      <input type="hidden" id="editLotId">
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">รหัสลานจอด (ID)</label>
+          <input type="text" id="lotIdInput" class="form-control" placeholder="สร้างให้อัตโนมัติ (เช่น P09)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อย่อ (Short Name)</label>
+          <input type="text" id="lotShortNameInput" class="form-control" placeholder="เช่น ไทยบุรี">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ชื่อลานจอดรถ <span style="color:#ef4444;">*</span></label>
+        <input type="text" id="lotNameInput" class="form-control" placeholder="ระบุชื่อเต็ม เช่น ลานจอดรถอาคารไทยบุรี" required>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">ความจุทั้งหมด (ช่องจอด) <span style="color:#ef4444;">*</span></label>
+          <input type="number" id="lotTotalSpotsInput" class="form-control" min="1" placeholder="เช่น 100" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ช่องว่างปัจจุบัน <span style="color:#ef4444;">*</span></label>
+          <input type="number" id="lotAvailableSpotsInput" class="form-control" min="0" placeholder="เช่น 25" required>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">เวลาทำการ</label>
+          <input type="text" id="lotOpenHoursInput" class="form-control" placeholder="เช่น 06:00–22:00 หรือ 24 ชม.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ค่าบริการ (บาท/ชม.)</label>
+          <input type="number" id="lotPriceInput" class="form-control" min="0" value="0" placeholder="0 = ฟรี">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">ละติจูด (Lat)</label>
+          <input type="number" step="any" id="lotLatInput" class="form-control" value="8.6450">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ลองจิจูด (Lng)</label>
+          <input type="number" step="any" id="lotLngInput" class="form-control" value="99.8970">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">รายละเอียด / จุดสังเกต</label>
+        <textarea id="lotDescInput" class="form-control" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติมเกี่ยวกับลานจอดนี้..."></textarea>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--asphalt-line);">
+        <button type="button" class="btn btn-ghost" id="cancelModalBtn">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary" id="saveLotBtn" style="background:#ef4444;border-color:#ef4444;">
+          บันทึกข้อมูล
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── MODAL: DELETE CONFIRMATION ──────────────────────────────────────────── -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header" style="border-bottom-color:rgba(239,68,68,0.3);">
+      <div class="modal-title" style="color:#ef4444;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        ยืนยันการลบลานจอดรถ
+      </div>
+      <button class="modal-close" id="closeDeleteModalBtn">&times;</button>
+    </div>
+
+    <div style="padding:10px 0 20px;font-size:14.5px;color:var(--concrete);line-height:1.6;">
+      คุณแน่ใจหรือไม่ว่าต้องการลบลานจอดรถ <b id="deleteLotName" style="color:#ef4444;"></b> (<span id="deleteLotId" style="font-family:var(--font-mono);"></span>)?
+      <div style="margin-top:8px;font-size:13px;color:var(--slate);">การดำเนินการนี้จะไม่สามารถย้อนกลับได้ และข้อมูลลานจอดรถนี้จะถูกลบออกจากระบบทันที</div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:12px;padding-top:14px;border-top:1px solid var(--asphalt-line);">
+      <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">ยกเลิก</button>
+      <button type="button" class="btn btn-danger" id="confirmDeleteBtn" style="padding:8px 18px;font-size:13.5px;font-weight:600;">
+        🗑️ ยืนยันการลบ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────────────────────── -->
+<script src="../../utils/auth.js"></script>
+<script src="../../utils/parkingData.js"></script>
+<script src="../../api/parkingApi.js"></script>
+<script src="../../components/ProtectedRoute.js"></script>
+
+<script>
+  function showToast(msg, type = 'default') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  // Enforce ADMIN role protection
+  ProtectedRoute.guard({ requireAuth: true, allowedRoles: ['ADMIN'] });
+  const adminUser = ProtectedRoute.getUser();
+
+  if (adminUser) {
+    document.getElementById('navAvatar').textContent = (adminUser.name || 'A').charAt(0).toUpperCase();
+    document.getElementById('navName').textContent   = adminUser.name;
+  }
+
+  let allLots = [];
+  let deleteTargetId = null;
+
+  const STATUS_CONFIG = {
+    available: { label: 'ว่าง', class: 'available', dot: '🟢' },
+    tight:     { label: 'หนาแน่น', class: 'tight', dot: '🟠' },
+    full:      { label: 'เต็ม', class: 'full', dot: '🔴' }
+  };
+
+  // Load Parking Lots
+  function loadParkingLots() {
+    const loadingBox = document.getElementById('loadingBox');
+    const tableWrap  = document.getElementById('tableWrap');
+    
+    try {
+      allLots = parkingApi.getParkingLots();
+      loadingBox.style.display = 'none';
+      tableWrap.style.display  = 'block';
+
+      updateStats(allLots);
+      renderTable();
+    } catch (err) {
+      loadingBox.style.display = 'none';
+      showToast('❌ ไม่สามารถโหลดข้อมูลลานจอดรถได้', 'error');
+      console.error(err);
+    }
+  }
+
+  function updateStats(lots) {
+    const totalCapacity  = lots.reduce((sum, l) => sum + (l.totalSpots || 0), 0);
+    const totalAvailable = lots.reduce((sum, l) => sum + (l.availableSpots || 0), 0);
+    const fullLotsCount  = lots.filter(l => l.status === 'full' || l.availableSpots === 0).length;
+
+    document.getElementById('statTotalLots').textContent      = lots.length;
+    document.getElementById('statTotalCapacity').textContent  = totalCapacity.toLocaleString();
+    document.getElementById('statTotalAvailable').textContent = totalAvailable.toLocaleString();
+    document.getElementById('statFullLots').textContent      = fullLotsCount;
+  }
+
+  function renderTable() {
+    const tbody     = document.getElementById('parkingTbody');
+    const emptyBox  = document.getElementById('emptyResults');
+    const tableWrap = document.getElementById('tableWrap');
+    const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+    const statusVal = document.getElementById('filterStatus').value;
+
+    const filtered = allLots.filter(l => {
+      const matchSearch = !searchVal || 
+        (l.id && l.id.toLowerCase().includes(searchVal)) ||
+        (l.name && l.name.toLowerCase().includes(searchVal)) ||
+        (l.shortName && l.shortName.toLowerCase().includes(searchVal));
+
+      const matchStatus = statusVal === 'ALL' || l.status === statusVal;
+
+      return matchSearch && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+      tableWrap.style.display = 'none';
+      emptyBox.style.display  = 'block';
+      return;
+    }
+
+    emptyBox.style.display  = 'none';
+    tableWrap.style.display = 'block';
+
+    tbody.innerHTML = filtered.map(l => {
+      const st = STATUS_CONFIG[l.status] || { label: l.status, class: 'available', dot: '⚪' };
+      const pct = l.totalSpots > 0 ? Math.round((l.availableSpots / l.totalSpots) * 100) : 0;
+      
+      let barColor = 'var(--go-green)';
+      if (l.status === 'tight') barColor = 'var(--road-yellow)';
+      if (l.status === 'full') barColor = '#ef4444';
+
+      return `
+        <tr>
+          <td>
+            <span style="font-family:var(--font-mono);font-weight:700;color:var(--road-yellow);background:rgba(245,158,11,0.1);padding:2px 6px;border-radius:4px;border:1px solid rgba(245,158,11,0.2);">
+              ${l.id}
+            </span>
+          </td>
+          <td>
+            <div style="font-weight:700;color:var(--concrete);">${l.name}</div>
+            <div style="font-size:12px;color:var(--slate);">${l.shortName ? `(${l.shortName})` : ''} ${l.description ? `· ${l.description.slice(0, 45)}...` : ''}</div>
+          </td>
+          <td style="text-align:center;font-weight:600;color:var(--concrete);">${l.totalSpots}</td>
+          <td style="text-align:center;font-weight:700;color:${l.availableSpots > 0 ? '#4ade80' : '#fca5a5'};">${l.availableSpots}</td>
+          <td style="text-align:center;">
+            <div style="font-size:11px;font-family:var(--font-mono);color:var(--slate);margin-bottom:4px;">${pct}%</div>
+            <div style="width:100%;height:6px;background:var(--ink-3);border-radius:3px;overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;"></div>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge ${st.class}">
+              ${st.dot} ${st.label}
+            </span>
+          </td>
+          <td style="font-size:12.5px;color:var(--slate);">${l.openHours || '06:00–22:00'}</td>
+          <td style="text-align:right;">
+            <button onclick="openEditModal('${l.id}')" class="btn btn-ghost" style="padding:5px 10px;font-size:12px;margin-right:4px;">
+              ✏️ แก้ไข
+            </button>
+            <button onclick="openDeleteModal('${l.id}')" class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:#fca5a5;border-color:rgba(239,68,68,0.3);">
+              🗑️ ลบ
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Filter Event Listeners
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('filterStatus').addEventListener('change', renderTable);
+
+  // ─── Modal Handling ───────────────────────────────────────────────────────────
+  const modal          = document.getElementById('parkingModal');
+  const deleteModal    = document.getElementById('deleteModal');
+  const errorAlert     = document.getElementById('modalErrorAlert');
+  const errorMsg       = document.getElementById('modalErrorMsg');
+  const parkingForm    = document.getElementById('parkingForm');
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorAlert.style.display = 'flex';
+  }
+
+  function hideError() {
+    errorAlert.style.display = 'none';
+  }
+
+  function openCreateModal() {
+    hideError();
+    document.getElementById('editLotId').value = '';
+    document.getElementById('modalTitleText').textContent = 'เพิ่มลานจอดรถใหม่';
+    document.getElementById('lotIdInput').disabled = false;
+    document.getElementById('lotIdInput').value = '';
+    document.getElementById('lotNameInput').value = '';
+    document.getElementById('lotShortNameInput').value = '';
+    document.getElementById('lotTotalSpotsInput').value = '100';
+    document.getElementById('lotAvailableSpotsInput').value = '50';
+    document.getElementById('lotOpenHoursInput').value = '06:00–22:00';
+    document.getElementById('lotPriceInput').value = '0';
+    document.getElementById('lotLatInput').value = '8.6450';
+    document.getElementById('lotLngInput').value = '99.8970';
+    document.getElementById('lotDescInput').value = '';
+
+    modal.classList.add('active');
+  }
+
+  window.openEditModal = function(id) {
+    hideError();
+    const lot = parkingApi.getParkingLotById(id);
+    if (!lot) {
+      showToast('ไม่พบลานจอดรถที่ต้องการแก้ไข', 'error');
+      return;
+    }
+
+    document.getElementById('editLotId').value = lot.id;
+    document.getElementById('modalTitleText').textContent = `แก้ไขข้อมูลลานจอดรถ (${lot.id})`;
+    document.getElementById('lotIdInput').value = lot.id;
+    document.getElementById('lotIdInput').disabled = true;
+
+    document.getElementById('lotNameInput').value = lot.name || '';
+    document.getElementById('lotShortNameInput').value = lot.shortName || '';
+    document.getElementById('lotTotalSpotsInput').value = lot.totalSpots || 0;
+    document.getElementById('lotAvailableSpotsInput').value = lot.availableSpots !== undefined ? lot.availableSpots : 0;
+    document.getElementById('lotOpenHoursInput').value = lot.openHours || '06:00–22:00';
+    document.getElementById('lotPriceInput').value = lot.pricePerHour !== undefined ? lot.pricePerHour : 0;
+    document.getElementById('lotLatInput').value = lot.lat || 8.6450;
+    document.getElementById('lotLngInput').value = lot.lng || 99.8970;
+    document.getElementById('lotDescInput').value = lot.description || '';
+
+    modal.classList.add('active');
+  };
+
+  function closeModal() {
+    modal.classList.remove('active');
+  }
+
+  document.getElementById('openCreateModalBtn').addEventListener('click', openCreateModal);
+  document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+
+  // Form Submit (Create / Edit)
+  parkingForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    hideError();
+
+    const editId = document.getElementById('editLotId').value;
+    const name = document.getElementById('lotNameInput').value.trim();
+    const shortName = document.getElementById('lotShortNameInput').value.trim();
+    const totalSpots = parseInt(document.getElementById('lotTotalSpotsInput').value, 10);
+    const availableSpots = parseInt(document.getElementById('lotAvailableSpotsInput').value, 10);
+    const openHours = document.getElementById('lotOpenHoursInput').value.trim();
+    const pricePerHour = parseFloat(document.getElementById('lotPriceInput').value) || 0;
+    const lat = parseFloat(document.getElementById('lotLatInput').value) || 8.6450;
+    const lng = parseFloat(document.getElementById('lotLngInput').value) || 99.8970;
+    const description = document.getElementById('lotDescInput').value.trim();
+
+    // Client-side Validation check for capacity vs available
+    if (availableSpots > totalSpots) {
+      showError('จำนวนช่องว่างต้องไม่มากกว่าจำนวนช่องจอดทั้งหมด');
+      return;
+    }
+
+    try {
+      if (editId) {
+        // Update existing
+        parkingApi.updateParkingLot(editId, {
+          name, shortName, totalSpots, availableSpots, openHours, pricePerHour, lat, lng, description
+        });
+        showToast(`✅ อัปเดตลานจอดรถ "${name}" เรียบร้อยแล้ว`, 'success');
+      } else {
+        // Create new
+        const customId = document.getElementById('lotIdInput').value.trim();
+        parkingApi.createParkingLot({
+          id: customId,
+          name, shortName, totalSpots, availableSpots, openHours, pricePerHour, lat, lng, description
+        });
+        showToast(`🎉 เพิ่มลานจอดรถ "${name}" เรียบร้อยแล้ว`, 'success');
+      }
+
+      closeModal();
+      loadParkingLots();
+    } catch (err) {
+      showError(err.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    }
+  });
+
+  // ─── Delete Modal Handling ───────────────────────────────────────────────────
+  window.openDeleteModal = function(id) {
+    const lot = parkingApi.getParkingLotById(id);
+    if (!lot) return;
+
+    deleteTargetId = id;
+    document.getElementById('deleteLotName').textContent = lot.name;
+    document.getElementById('deleteLotId').textContent = lot.id;
+    deleteModal.classList.add('active');
+  };
+
+  function closeDeleteModal() {
+    deleteModal.classList.remove('active');
+    deleteTargetId = null;
+  }
+
+  document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteModal);
+  document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+    if (!deleteTargetId) return;
+    try {
+      parkingApi.deleteParkingLot(deleteTargetId);
+      showToast('🗑️ ลบลานจอดรถเรียบร้อยแล้ว', 'success');
+      closeDeleteModal();
+      loadParkingLots();
+    } catch (err) {
+      showToast(err.message || 'ไม่สามารถลบลานจอดรถได้', 'error');
+    }
+  });
+
+  // Logout Handler
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await authService.logout();
+    window.location.href = '../login.html';
+  });
+
+  // Init Page
+  loadParkingLots();
+</script>
+</body>
+</html>
