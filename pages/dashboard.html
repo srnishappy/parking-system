@@ -313,6 +313,14 @@ function buildGuestContextPanel(location, isMock) {
 let currentUserLocation = null;
 
 // ─── Load & Render Recommendations ───────────────────────────────────────────
+const SETTINGS_KEY = 'parking_app_settings';
+function getAppSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    return saved || {};
+  } catch { return {}; }
+}
+
 async function loadRecommendations(guestLocation = null) {
   document.getElementById('recLoading').style.display  = 'flex';
   document.getElementById('cardsGrid').style.display   = 'none';
@@ -356,10 +364,22 @@ async function loadRecommendations(guestLocation = null) {
   document.getElementById('recReason').textContent = result.reason;
   document.getElementById('recReasonBox').style.display = 'flex';
 
+  // ── Apply "showOnlyAvail" setting — filter out full lots ──
+  const appSettings = getAppSettings();
+  let lotsToShow = result.lots;
+  if (appSettings.showOnlyAvail) {
+    lotsToShow = result.lots.filter(l => l.status !== 'full');
+    if (lotsToShow.length === 0) {
+      // If all are full, still show them but with a notice
+      lotsToShow = result.lots;
+      showToast('⚠️ ลานจอดทั้งหมดเต็ม — แสดงทุกลานแทน', 'default');
+    }
+  }
+
   // Render cards
   const grid = document.getElementById('cardsGrid');
   grid.innerHTML = '';
-  result.lots.forEach((lot, idx) => {
+  lotsToShow.forEach((lot, idx) => {
     grid.appendChild(ParkingCard.create(lot, idx + 1, true));
   });
 
@@ -367,8 +387,9 @@ async function loadRecommendations(guestLocation = null) {
   grid.style.display = 'grid';
 
   // Toast
-  const total = result.lots.length;
-  showToast(`✅ พบที่จอดรถที่แนะนำ ${total} แห่งสำหรับคุณ`, 'success');
+  const total = lotsToShow.length;
+  const filterNote = appSettings.showOnlyAvail ? ' (กรองเฉพาะที่ว่าง)' : '';
+  showToast(`✅ พบที่จอดรถที่แนะนำ ${total} แห่งสำหรับคุณ${filterNote}`, 'success');
 }
 
 // ─── Search Logic ─────────────────────────────────────────────────────────────
@@ -512,10 +533,27 @@ document.getElementById('manualRefreshBtn').addEventListener('click', () => {
   performAutoUpdate(true);
 });
 
-// Auto refresh every 60 seconds (60,000 ms) without page reload
-setInterval(() => {
-  performAutoUpdate(false);
-}, 60000);
+// Auto refresh every 60 seconds — only runs if autoUpdate setting is enabled
+let autoRefreshInterval = null;
+
+function startAutoRefresh() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+  const s = getAppSettings();
+  if (s.autoUpdate !== false) {          // default true when key missing
+    autoRefreshInterval = setInterval(() => {
+      if (getAppSettings().autoUpdate !== false) {
+        performAutoUpdate(false);
+      }
+    }, 60000);
+  }
+}
+
+startAutoRefresh();
+
+// If settings change in another tab (e.g. settings page), restart auto-refresh
+window.addEventListener('storage', (e) => {
+  if (e.key === SETTINGS_KEY) startAutoRefresh();
+});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (async function init() {

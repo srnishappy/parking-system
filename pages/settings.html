@@ -41,53 +41,29 @@
 
   <div style="max-width:700px;">
 
-    <div class="settings-card">
-      <h3>การแจ้งเตือน (Notifications)</h3>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="title">แจ้งเตือนเมื่อช่องจอดว่าง</div>
-          <div class="desc">ส่งการแจ้งเตือนเมื่อลานจอดที่บันทึกไว้มีช่องว่างมากกว่า 5 ช่อง</div>
-        </div>
-        <label class="switch"><input type="checkbox" checked id="sw1"><span class="slider"></span></label>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="title">แจ้งเตือนก่อนคาบเรียน (นักศึกษา)</div>
-          <div class="desc">แจ้งเตือน 30 นาทีก่อนคาบเรียนเริ่ม เพื่อแนะนำที่จอดรถ</div>
-        </div>
-        <label class="switch"><input type="checkbox" checked id="sw2"><span class="slider"></span></label>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="title">แจ้งเตือนจุดชาร์จ EV</div>
-          <div class="desc">แสดงเฉพาะลานจอดที่มีแท่นชาร์จรถยนต์ไฟฟ้า</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="sw3"><span class="slider"></span></label>
-      </div>
-    </div>
 
     <div class="settings-card">
       <h3>การค้นหาและแนะนำ</h3>
       <div class="setting-item">
         <div class="setting-info">
           <div class="title">อัปเดตข้อมูลอัตโนมัติ</div>
-          <div class="desc">รีเฟรชสถานะช่องจอดรถทุก 15 วินาที</div>
+          <div class="desc">รีเฟรชสถานะช่องจอดรถทุก 60 วินาทีโดยอัตโนมัติ</div>
         </div>
-        <label class="switch"><input type="checkbox" checked id="sw4"><span class="slider"></span></label>
+        <label class="switch"><input type="checkbox" id="sw4"><span class="slider"></span></label>
       </div>
       <div class="setting-item">
         <div class="setting-info">
           <div class="title">แสดงเฉพาะลานจอดที่ว่าง</div>
-          <div class="desc">กรองลานจอดที่เต็มแล้วออกจากรายการแนะนำ</div>
+          <div class="desc">กรองลานจอดที่เต็มแล้วออกจากรายการแนะนำในหน้า Dashboard</div>
         </div>
         <label class="switch"><input type="checkbox" id="sw5"><span class="slider"></span></label>
       </div>
       <div class="setting-item">
         <div class="setting-info">
           <div class="title">ใช้ตำแหน่ง GPS (สำหรับบุคคลภายนอก)</div>
-          <div class="desc">อนุญาตให้ระบบเข้าถึงตำแหน่งปัจจุบันของคุณ</div>
+          <div class="desc">อนุญาตให้ระบบเข้าถึงตำแหน่งปัจจุบันของคุณเพื่อแนะนำที่จอดรถที่ใกล้ที่สุด</div>
         </div>
-        <label class="switch"><input type="checkbox" checked id="sw6"><span class="slider"></span></label>
+        <label class="switch"><input type="checkbox" id="sw6"><span class="slider"></span></label>
       </div>
     </div>
 
@@ -121,7 +97,8 @@
 <script src="../utils/auth.js"></script>
 <script src="../components/ProtectedRoute.js"></script>
 <script>
-  function showToast(msg, type='default') {
+  // ── Toast Helper ─────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'default') {
     const c = document.getElementById('toast-container');
     const t = document.createElement('div');
     t.className = `toast toast-${type}`;
@@ -130,6 +107,7 @@
     setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 300); }, 3500);
   }
 
+  // ── Auth Guard ───────────────────────────────────────────────────────────────
   ProtectedRoute.guard({ requireAuth: true });
   const user = ProtectedRoute.getUser();
   if (user) {
@@ -137,19 +115,121 @@
     document.getElementById('navName').textContent   = user.name;
   }
 
+  // ── Settings Key & Defaults ──────────────────────────────────────────────────
+  const SETTINGS_KEY = 'parking_app_settings';
+  const DEFAULTS = {
+    autoUpdate:    true,   // sw4: อัปเดตอัตโนมัติ
+    showOnlyAvail: false,  // sw5: แสดงเฉพาะลานที่ว่าง
+    useGps:        true,   // sw6: ใช้ GPS
+  };
+
+  // ── Load Settings ────────────────────────────────────────────────────────────
+  function loadSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      return saved ? { ...DEFAULTS, ...saved } : { ...DEFAULTS };
+    } catch { return { ...DEFAULTS }; }
+  }
+
+  // ── Save Settings ────────────────────────────────────────────────────────────
+  function saveSettings(settings) {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }
+
+  // ── Apply Saved State to Checkboxes ─────────────────────────────────────────
+  const settings = loadSettings();
+  document.getElementById('sw4').checked = settings.autoUpdate;
+  document.getElementById('sw5').checked = settings.showOnlyAvail;
+  document.getElementById('sw6').checked = settings.useGps;
+
+  // ── Wire Toggle Change Events ─────────────────────────────────────────────────
+  const TOGGLE_MAP = {
+    sw4: 'autoUpdate',
+    sw5: 'showOnlyAvail',
+    sw6: 'useGps',
+  };
+
+  const TOGGLE_LABELS = {
+    sw4: 'อัปเดตอัตโนมัติ',
+    sw5: 'แสดงเฉพาะลานที่ว่าง',
+    sw6: 'ใช้ GPS',
+  };
+
+  Object.keys(TOGGLE_MAP).forEach(id => {
+    const el  = document.getElementById(id);
+    const key = TOGGLE_MAP[id];
+    const lbl = TOGGLE_LABELS[id];
+    if (!el) return;
+    el.addEventListener('change', () => {
+      const current = loadSettings();
+      current[key] = el.checked;
+      saveSettings(current);
+
+      // Real side-effects per toggle
+      if (id === 'sw5') {
+        // "Show only available" — inform user the Dashboard will reflect this
+        showToast(
+          el.checked
+            ? '🔍 Dashboard จะแสดงเฉพาะลานจอดที่ว่างแล้ว'
+            : '🔍 Dashboard จะแสดงลานจอดทั้งหมด',
+          'info'
+        );
+      } else if (id === 'sw4') {
+        showToast(
+          el.checked
+            ? '🔄 เปิดอัปเดตอัตโนมัติทุก 60 วินาทีแล้ว'
+            : '⏸️ ปิดอัปเดตอัตโนมัติแล้ว — ใช้ปุ่ม "รีเฟรชข้อมูล" ด้วยตนเอง',
+          'info'
+        );
+      } else if (id === 'sw6') {
+        if (el.checked && navigator.geolocation) {
+          showToast('📍 จะใช้ GPS เพื่อระบุตำแหน่งของคุณใน Dashboard', 'info');
+        } else if (el.checked && !navigator.geolocation) {
+          el.checked = false;
+          current[key] = false;
+          saveSettings(current);
+          showToast('❌ เบราว์เซอร์นี้ไม่รองรับ GPS', 'error');
+        } else {
+          showToast('📍 ปิดการใช้ GPS แล้ว จะใช้ Mock Location แทน', 'info');
+        }
+      } else {
+        showToast(
+          el.checked ? `🔔 เปิด ${lbl} แล้ว` : `🔕 ปิด ${lbl} แล้ว`,
+          'default'
+        );
+      }
+    });
+  });
+
+  // ── Save All Button ──────────────────────────────────────────────────────────
   document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-    showToast('✅ บันทึกการตั้งค่าเรียบร้อยแล้ว', 'success');
+    const current = loadSettings();
+    current.autoUpdate    = document.getElementById('sw4').checked;
+    current.showOnlyAvail = document.getElementById('sw5').checked;
+    current.useGps        = document.getElementById('sw6').checked;
+    saveSettings(current);
+    showToast('✅ บันทึกการตั้งค่าทั้งหมดเรียบร้อยแล้ว', 'success');
   });
 
+  // ── Clear Cache Button ───────────────────────────────────────────────────────
   document.getElementById('clearBtn').addEventListener('click', () => {
-    showToast('🗑️ ล้างข้อมูล Cache เรียบร้อยแล้ว', 'success');
+    // Clear cache keys but keep auth and settings
+    const keysToKeep = ['parking_app_users', 'parking_app_current_user',
+                         'parking_app_is_logged_in', 'parking_app_auth_version',
+                         SETTINGS_KEY];
+    Object.keys(localStorage)
+      .filter(k => !keysToKeep.includes(k))
+      .forEach(k => localStorage.removeItem(k));
+    showToast('🗑️ ล้างข้อมูล Cache เรียบร้อยแล้ว (เก็บข้อมูลบัญชีและการตั้งค่าไว้)', 'success');
   });
 
+  // ── Logout All Button ────────────────────────────────────────────────────────
   document.getElementById('logoutAllBtn').addEventListener('click', async () => {
     await authService.logout();
     window.location.href = './login.html';
   });
 
+  // ── Nav Logout ───────────────────────────────────────────────────────────────
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await authService.logout();
     window.location.href = './login.html';
