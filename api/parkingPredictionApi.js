@@ -60,25 +60,6 @@ class ParkingPredictionApi {
     const now = new Date();
     this._lastUpdated = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
 
-    // Fluctuate 1-3 3D parking spaces randomly
-    if (window.parkingApi && typeof window.parkingApi.getParkingSpaces === 'function') {
-      const spaces = window.parkingApi.getParkingSpaces();
-      if (spaces.length > 0) {
-        const toggleCount = Math.floor(Math.random() * 3) + 1; // 1 to 3 spaces
-        for (let i = 0; i < toggleCount; i++) {
-          const randomIndex = Math.floor(Math.random() * spaces.length);
-          const sp = spaces[randomIndex];
-          if (sp.status === 'AVAILABLE') {
-            sp.status = 'OCCUPIED';
-          } else if (sp.status === 'OCCUPIED') {
-            sp.status = 'AVAILABLE';
-          }
-          sp.lastUpdated = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        }
-        window.parkingApi.saveAllParkingSpaces(spaces);
-      }
-    }
-
     lots.forEach(lot => {
       // Bounded randomization between -2 and +3
       const change = Math.floor(Math.random() * 6) - 2; // -2, -1, 0, +1, +2, +3
